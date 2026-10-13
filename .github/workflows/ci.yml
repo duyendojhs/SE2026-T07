@@ -1,0 +1,26 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  governance-audit:
+    name: Architecture & Governance Verification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Validate Core Governance Assets
+        run: |
+          test -f PRIVACY.md || { echo "ERROR: PRIVACY.md is missing"; exit 1; }
+          test -f compose.yml || { echo "ERROR: compose.yml is missing"; exit 1; }
+          test -f .ai/AGENTS.md || { echo "ERROR: .ai/AGENTS.md is missing"; exit 1; }
+          test -d backend/tests/mocks || { echo "ERROR: backend/tests/mocks is missing"; exit 1; }
+          test -d backend/tests/rules || { echo "ERROR: backend/tests/rules is missing"; exit 1; }
+          echo "All structural and governance validations passed successfully."
