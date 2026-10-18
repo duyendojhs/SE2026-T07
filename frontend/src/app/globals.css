@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --background: #f4f6f9;
+  --foreground: #17213a;
+  --surface: #ffffff;
+  --surface-muted: #f8fafc;
+  --surface-subtle: #eef2f6;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --border: #dce2e9;
+  --primary: #2563eb;
+  --primary-soft: #eff6ff;
+  --chart-review: #7663b0;
+  --on-color: #ffffff;
+  --success: #228147;
+  --success-soft: #dcf2e6;
+  --success-medium: #a3d9b8;
+  --success-strong: #32845c;
+  --success-deep: #195c3b;
+  --warning: #925600;
+  --warning-soft: #fff7e6;
+  --warning-border: #e8c88f;
+  --overlay: 23 33 58;
+}
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+::selection {
+  background: var(--primary-soft);
+  color: var(--foreground);
+}
+@layer base {
+  :focus-visible {
+    @apply outline outline-2 outline-offset-4 outline-primary;
+  }
+}
