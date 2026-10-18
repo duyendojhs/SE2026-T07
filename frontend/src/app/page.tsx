@@ -1,7 +1,6 @@
-export default function Home(): React.JSX.Element {
+import { PageHeader } from "@/components/layout/PageHeader";
+export default function Page(): React.JSX.Element {
   return (
-    <main className="p-6">
-      <h1 className="text-2xl font-semibold">GitHub Project Coach</h1>
-    </main>
+    <PageHeader title="Dashboard" meta="No repository metadata connected." />
   );
 }
