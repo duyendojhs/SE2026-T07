@@ -1,6 +1,16 @@
-import { PageHeader } from "@/components/layout/PageHeader";
-export default function Page(): React.JSX.Element {
+import { DashboardView } from "@/features/dashboard/components/DashboardView";
+import { parseDashboardRange } from "@/features/dashboard/model";
+import { sampleDashboard } from "@/mocks/dashboard";
+
+export const metadata = { title: "Dashboard" };
+
+export default function DashboardPage({
+  searchParams = {},
+}: {
+  searchParams?: { range?: string | string[] };
+}): React.JSX.Element {
+  const range = parseDashboardRange(searchParams.range);
   return (
-    <PageHeader title="Dashboard" meta="No repository metadata connected." />
+    <DashboardView key={range} data={sampleDashboard} initialRange={range} />
   );
 }

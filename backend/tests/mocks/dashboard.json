@@ -1,0 +1,99 @@
+{
+  "repository": "team-entropy / project-coach",
+  "period": "12–18 Oct 2026",
+  "alerts": [
+    {
+      "id": "PR #24",
+      "title": "Add metadata ingestion pipeline",
+      "reason": "No review received for 3 days",
+      "rule": "REVIEW_WAIT",
+      "metric": "72 hours without a review",
+      "label": "Review needed"
+    },
+    {
+      "id": "PR #19",
+      "title": "Configure project telemetry",
+      "reason": "No activity for 5 days",
+      "rule": "STALE_PR",
+      "metric": "120 hours since last activity",
+      "label": "Stale pull request"
+    }
+  ],
+  "activity": [
+    {
+      "day": "Mon",
+      "date": "12 Oct",
+      "commits": 4,
+      "pullRequests": 1,
+      "reviews": 2,
+      "mergedPullRequests": 1,
+      "reviewWaitHours": [
+        12
+      ]
+    },
+    {
+      "day": "Tue",
+      "date": "13 Oct",
+      "commits": 7,
+      "pullRequests": 3,
+      "reviews": 1,
+      "mergedPullRequests": 0,
+      "reviewWaitHours": [
+        18
+      ]
+    },
+    {
+      "day": "Wed",
+      "date": "14 Oct",
+      "commits": 2,
+      "pullRequests": 0,
+      "reviews": 3,
+      "mergedPullRequests": 1,
+      "reviewWaitHours": [
+        24
+      ]
+    },
+    {
+      "day": "Thu",
+      "date": "15 Oct",
+      "commits": 9,
+      "pullRequests": 2,
+      "reviews": 5,
+      "mergedPullRequests": 2,
+      "reviewWaitHours": [
+        10
+      ]
+    },
+    {
+      "day": "Fri",
+      "date": "16 Oct",
+      "commits": 6,
+      "pullRequests": 2,
+      "reviews": 4,
+      "mergedPullRequests": 1,
+      "reviewWaitHours": [
+        30
+      ]
+    },
+    {
+      "day": "Sat",
+      "date": "17 Oct",
+      "commits": 1,
+      "pullRequests": 0,
+      "reviews": 0,
+      "mergedPullRequests": 0,
+      "reviewWaitHours": []
+    },
+    {
+      "day": "Sun",
+      "date": "18 Oct",
+      "commits": 3,
+      "pullRequests": 1,
+      "reviews": 2,
+      "mergedPullRequests": 0,
+      "reviewWaitHours": []
+    }
+  ],
+  "awaitingReview": 3,
+  "year": 2026
+}
