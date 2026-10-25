@@ -27,16 +27,37 @@ jobs:
           test -f docs/adr/ADR-003-metadata-only.md || { echo "ERROR: ADR-003 is missing"; exit 1; }
           test -f docs/adr/ADR-004-rule-dsl.md || { echo "ERROR: ADR-004 is missing"; exit 1; }
           test -f docs/adr/ADR-005-llm-narrates.md || { echo "ERROR: ADR-005 is missing"; exit 1; }
+          test -f docs/adr/ADR-006-postgresql.md || { echo "ERROR: ADR-006 is missing"; exit 1; }
+          test -f docs/adr/ADR-008-audit-hash-chain.md || { echo "ERROR: ADR-008 is missing"; exit 1; }
           test -d backend/tests/mocks || { echo "ERROR: backend/tests/mocks is missing"; exit 1; }
           test -d backend/tests/rules || { echo "ERROR: backend/tests/rules is missing"; exit 1; }
           echo "All structural and governance validations passed successfully."
 
   backend:
-    name: Backend Lint & Tests
+    name: Backend Lint, Types, Migrations & Tests
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: backend
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: coach_user
+          POSTGRES_PASSWORD: coach_password
+          POSTGRES_DB: github_coach_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U coach_user -d github_coach_db"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql+psycopg://coach_user:coach_password@localhost:5432/github_coach_db
+      REDIS_URL: redis://localhost:6379/0
+      SESSION_SECRET: ci-only-session-secret-32-bytes-min
+      AUDIT_HMAC_SECRET: ci-only-audit-secret-32-bytes-min
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v4
@@ -53,6 +74,12 @@ jobs:
 
       - name: Ruff
         run: ruff check .
+
+      - name: Mypy
+        run: mypy app
+
+      - name: Apply migrations
+        run: alembic upgrade head
 
       - name: Pytest
         run: pytest
