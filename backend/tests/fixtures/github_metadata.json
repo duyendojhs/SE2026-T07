@@ -1,0 +1,61 @@
+{
+  "repository": {
+    "full_name": "duyendojhs/SE2026-T07",
+    "default_branch": "main"
+  },
+  "pull_requests": [
+    {
+      "id": 101,
+      "number": 4,
+      "title": "chore: scaffold backend service",
+      "state": "closed",
+      "merged_at": "2026-10-20T09:30:00Z",
+      "created_at": "2026-10-19T08:00:00Z",
+      "closed_at": "2026-10-20T09:30:00Z",
+      "additions": 120,
+      "deletions": 4,
+      "changed_files": 5,
+      "user": {"login": "duyendojhs"},
+      "requested_reviewers": [{"login": "ban-khanh-duy"}]
+    }
+  ],
+  "issues": [
+    {
+      "id": 201,
+      "number": 3,
+      "title": "Define metadata ingestion contract",
+      "state": "closed",
+      "created_at": "2026-10-18T07:00:00Z",
+      "closed_at": "2026-10-19T10:00:00Z",
+      "user": {"login": "hoang-khanh-an"},
+      "labels": [{"name": "backend"}]
+    }
+  ],
+  "reviews": [
+    {
+      "id": 301,
+      "user": {"login": "ban-khanh-duy"},
+      "state": "APPROVED",
+      "submitted_at": "2026-10-20T08:45:00Z"
+    }
+  ],
+  "comments": [
+    {
+      "id": 401,
+      "user": {"login": "truong-the-anh"},
+      "created_at": "2026-10-20T08:00:00Z",
+      "body_length": 42,
+      "has_code_block": false
+    }
+  ],
+  "commits": [
+    {
+      "sha": "48aee32",
+      "author": {"login": "duyendojhs"},
+      "commit": {
+        "author": {"date": "2026-10-20T09:25:00Z"},
+        "message": "chore: scaffold backend service"
+      }
+    }
+  ]
+}
