@@ -1,0 +1,14 @@
+"""GitHub webhook signature verification."""
+
+from __future__ import annotations
+
+import hashlib
+import hmac
+
+
+def verify_signature(body: bytes, signature: str | None, secret: str) -> bool:
+    if not signature or not signature.startswith("sha256="):
+        return False
+    expected = hmac.new(secret.encode("utf-8"), body, hashlib.sha256).hexdigest()
+    provided = signature.split("=", 1)[1]
+    return hmac.compare_digest(expected, provided)

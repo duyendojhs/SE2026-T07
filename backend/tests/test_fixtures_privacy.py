@@ -12,6 +12,11 @@ FORBIDDEN_KEYS = {
     "body",
     "commit_body",
     "comment_body",
+    "authorization",
+    "token",
+    "access_token",
+    "private_key",
+    "client_secret",
 }
 
 
