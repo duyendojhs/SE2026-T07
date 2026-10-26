@@ -1,0 +1,37 @@
+{
+  "commits": [
+    {
+      "sha": "a61e0b2d2d1c6a11f8703e7a9456b3e2d9c4a101",
+      "author": {"login": "member-alpha"},
+      "commit": {
+        "author": {
+          "name": "Member Alpha",
+          "date": "2026-10-21T08:45:00Z"
+        },
+        "message": "feat: add repository dashboard"
+      }
+    },
+    {
+      "sha": "b72f1c3e4e2d7b22a9814f8ba056c4f3e0d5b212",
+      "author": {"login": "member-beta"},
+      "commit": {
+        "author": {
+          "name": "Member Beta",
+          "date": "2026-10-22T14:10:00Z"
+        },
+        "message": "fix: handle empty repository metadata"
+      }
+    },
+    {
+      "sha": "c83a2d4f5f3e8c33ba92509cb167d5e4f1e6c323",
+      "author": null,
+      "commit": {
+        "author": {
+          "name": "External Contributor",
+          "date": "2026-10-23T16:25:00Z"
+        },
+        "message": "docs: clarify API pagination"
+      }
+    }
+  ]
+}
