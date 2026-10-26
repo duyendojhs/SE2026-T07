@@ -35,9 +35,11 @@ def collect_keys(value: Any) -> set[str]:
 
 
 def test_fixture_contains_no_forbidden_payload() -> None:
-    fixture = Path(__file__).parent / "fixtures" / "github_metadata.json"
-    payload = json.loads(fixture.read_text(encoding="utf-8"))
+    fixtures = [Path(__file__).parent / "fixtures" / "github_metadata.json"]
+    fixtures.extend((Path(__file__).parent / "mocks").glob("*.json"))
 
-    forbidden = FORBIDDEN_KEYS.intersection(collect_keys(payload))
+    for fixture in fixtures:
+        payload = json.loads(fixture.read_text(encoding="utf-8"))
+        forbidden = FORBIDDEN_KEYS.intersection(collect_keys(payload))
 
-    assert forbidden == set(), f"forbidden fixture keys: {sorted(forbidden)}"
+        assert forbidden == set(), f"{fixture.name} contains forbidden keys: {sorted(forbidden)}"
