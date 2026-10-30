@@ -1,1 +1,1 @@
-"""Offline mock fixtures and clients for GitHub API tests."""\n
+"""Offline mock fixtures and clients for GitHub API tests."""

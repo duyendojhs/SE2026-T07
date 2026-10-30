@@ -3,9 +3,7 @@ from typing import Any
 
 import httpx
 import pytest
-
 from mocks.mock_github_client import MockGitHubClient
-
 
 REPOSITORY = "/repos/example/project"
 

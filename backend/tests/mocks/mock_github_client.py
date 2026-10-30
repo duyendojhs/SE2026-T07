@@ -34,7 +34,7 @@ class MockGitHubClient:
     def _read_json(path: Path) -> dict[str, Any]:
         payload = json.loads(path.read_text(encoding="utf-8"))
         if not isinstance(payload, dict):
-            raise ValueError(f"Fixture root must be a JSON object: {path.name}")
+            raise TypeError(f"Fixture root must be a JSON object: {path.name}")
         return payload
 
     @classmethod
@@ -49,7 +49,7 @@ class MockGitHubClient:
     def _load_reviews(cls, path: Path) -> dict[str, list[dict[str, Any]]]:
         reviews = cls._read_json(path).get("reviews")
         if not isinstance(reviews, dict):
-            raise ValueError(f"Fixture '{path.name}' must contain a reviews object")
+            raise TypeError(f"Fixture '{path.name}' must contain a reviews object")
         if any(
             not isinstance(items, list) or any(not isinstance(item, dict) for item in items)
             for items in reviews.values()
@@ -84,4 +84,4 @@ class MockGitHubClient:
         yield deepcopy(records)
 
     def close(self) -> None:
-        """Match the real client's lifecycle method; there are no resources to close."""\n
+        """Match the real client's lifecycle method; there are no resources to close."""
