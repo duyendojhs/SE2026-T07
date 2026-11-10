@@ -9,7 +9,8 @@
 ## 2. Non-Negotiable Directives
 1. **Zero-Code Retention Policy**:
    - Strictly prohibit fetching, persisting, or analyzing raw source code from student repositories.
-   - Process metadata only: commit SHAs, timestamps, messages, issue/PR states, and review events.
+   - Process metadata only: commit SHAs, timestamps, commit subjects, issue/PR states, and review events. Never store comment bodies, commit bodies, diffs, patches, or file contents.
+   - Findings must be team- or module-level; never create an individual-level "silent member" or performance score.
 2. **Rate-Limit Resilience**:
    - All GitHub API integration modules must inspect `X-RateLimit-Remaining` and `X-RateLimit-Reset` headers.
    - Implement exponential backoff, retry mechanisms, and local caching.
