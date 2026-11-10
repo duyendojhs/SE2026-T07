@@ -3,8 +3,9 @@ import {
   median,
   parseDashboardRange,
   selectDashboard,
-} from "@/features/dashboard/model";
-import { sampleDashboard } from "@/mocks/dashboard";
+  sampleDashboard,
+} from "@/features/dashboard";
+
 describe("dashboard calculations", () => {
   it("calculates median without changing input and excludes invalid durations", () => {
     const values = [24, 12, 18];
@@ -14,6 +15,7 @@ describe("dashboard calculations", () => {
     expect(median([-1, Number.NaN, Number.POSITIVE_INFINITY, 0])).toBe(0);
     expect(median([])).toBeNull();
   });
+
   it("derives selected-period counts and keeps stale classification specific", () => {
     expect(selectDashboard(sampleDashboard, "7d")).toMatchObject({
       merged: 5,
@@ -32,6 +34,7 @@ describe("dashboard calculations", () => {
       selectDashboard({ ...sampleDashboard, activity: [] }, "7d"),
     ).toMatchObject({ merged: 0, medianWait: null, period: "No activity" });
   });
+
   it("normalizes URL ranges", () => {
     expect(parseDashboardRange("3d")).toBe("3d");
     expect(parseDashboardRange("unknown")).toBe("7d");

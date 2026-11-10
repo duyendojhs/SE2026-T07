@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { RateLimitGauge } from "@/components/telemetry/RateLimitGauge";
-import { sampleQuota } from "@/mocks/rate-limit";
+import { RateLimitGauge, sampleQuota } from "@/features/telemetry";
+
 describe("quota", () => {
   it("shows fixture values and an accessible percentage", () => {
     render(<RateLimitGauge quota={sampleQuota} />);
@@ -11,6 +11,7 @@ describe("quota", () => {
     );
     expect(screen.getByText("4,250 / 5,000 remaining")).toBeInTheDocument();
   });
+
   it("handles exhausted quota", () => {
     render(<RateLimitGauge quota={{ ...sampleQuota, remaining: 0 }} />);
     expect(screen.getByRole("progressbar")).toHaveAttribute(
@@ -18,6 +19,7 @@ describe("quota", () => {
       "0",
     );
   });
+
   it.each([
     null,
     { ...sampleQuota, limit: 0 },

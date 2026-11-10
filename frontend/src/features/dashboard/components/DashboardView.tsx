@@ -1,12 +1,14 @@
 "use client";
+
 import Link from "next/link";
 import { useState } from "react";
-import { ArrowRight, GitPullRequest, Info } from "lucide-react";
-import { Panel } from "@/components/ui/Panel";
-import { PageHeader } from "@/components/layout/PageHeader";
+import { ArrowRight, GitPullRequest } from "lucide-react";
+import { Panel } from "@/shared/components/ui/Panel";
+import { PageHeader } from "@/shared/components/layout/PageHeader";
 import { selectDashboard } from "../model";
 import { ActivityChart } from "./ActivityChart";
-import type { DashboardData, DashboardRange } from "@/types/dashboard";
+import { MetricsGrid } from "./MetricsGrid";
+import type { DashboardData, DashboardMetric, DashboardRange } from "../types";
 
 export function DashboardView({
   data,
@@ -18,7 +20,8 @@ export function DashboardView({
   const [range, setRange] = useState<DashboardRange>(initialRange);
   const view = selectDashboard(data, range);
   const alertsHref = `/stale-alerts?range=${range}`;
-  const metrics = [
+
+  const metrics: DashboardMetric[] = [
     {
       label: "Awaiting review",
       value: data.awaitingReview,
@@ -48,6 +51,7 @@ export function DashboardView({
       scope: "Selected period",
     },
   ];
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -85,39 +89,9 @@ export function DashboardView({
         </label>
         <p className="pb-2 text-xs text-muted">{view.period}</p>
       </div>
-      <section
-        aria-label="Project metrics"
-        className="grid grid-cols-2 gap-3 xl:grid-cols-4"
-      >
-        {metrics.map((metric) => (
-          <article
-            key={metric.label}
-            className="rounded-lg border border-line bg-surface p-5"
-          >
-            <div className="flex items-center justify-between gap-2">
-              <h2 className="text-xs font-medium text-secondary">
-                {metric.label}
-              </h2>
-              <span
-                tabIndex={0}
-                role="note"
-                aria-label={metric.hint}
-                title={metric.hint}
-                className="cursor-help text-muted"
-              >
-                <Info size={13} />
-              </span>
-            </div>
-            <p
-              className={`my-4 font-mono text-3xl font-semibold ${metric.color}`}
-              aria-label={`${metric.label}: ${metric.value}`}
-            >
-              {metric.value}
-            </p>
-            <p className="text-[10px] text-muted">{metric.scope}</p>
-          </article>
-        ))}
-      </section>
+
+      <MetricsGrid metrics={metrics} />
+
       <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <Panel
           title="Activity trend"

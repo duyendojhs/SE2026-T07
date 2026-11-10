@@ -1,6 +1,8 @@
-import { DashboardView } from "@/features/dashboard/components/DashboardView";
-import { parseDashboardRange } from "@/features/dashboard/model";
-import { sampleDashboard } from "@/mocks/dashboard";
+import {
+  DashboardView,
+  parseDashboardRange,
+  sampleDashboard,
+} from "@/features/dashboard";
 
 export const metadata = { title: "Dashboard" };
 

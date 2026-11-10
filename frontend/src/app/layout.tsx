@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { AppShell } from "@/components/layout/AppShell";
-import { sampleQuota } from "@/mocks/rate-limit";
+import { AppShell } from "@/shared/components/layout";
+import { sampleQuota } from "@/features/telemetry";
+
 export const metadata: Metadata = {
   title: {
     default: "GitHub Project Coach",
@@ -9,6 +10,7 @@ export const metadata: Metadata = {
   },
   description: "Explainable insights from GitHub collaboration metadata.",
 };
+
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>): React.JSX.Element {

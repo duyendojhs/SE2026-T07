@@ -1,4 +1,4 @@
-import type { ActivityDay } from "@/types/dashboard";
+import type { ActivityDay } from "../types";
 
 const series = [
   { key: "pullRequests", label: "PRs opened", color: "bg-primary" },
@@ -15,12 +15,14 @@ export function ActivityChart({
     1,
     ...days.flatMap((day) => series.map((item) => day[item.key])),
   );
+
   if (!days.length)
     return (
       <p className="py-16 text-center text-sm text-muted">
         No activity in this period.
       </p>
     );
+
   return (
     <>
       <div className="mb-5 flex flex-wrap gap-4 text-xs text-secondary">

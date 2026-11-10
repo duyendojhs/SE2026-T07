@@ -1,8 +1,4 @@
-import type {
-  ActivityDay,
-  DashboardData,
-  DashboardRange,
-} from "@/types/dashboard";
+import type { ActivityDay, DashboardData, DashboardRange } from "./types";
 
 export function parseDashboardRange(value?: string | string[]): DashboardRange {
   return value === "3d" ? "3d" : "7d";

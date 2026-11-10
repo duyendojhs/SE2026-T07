@@ -1,7 +1,9 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { AppShell } from "@/components/layout/AppShell";
+import { AppShell } from "@/shared/components/layout";
+
 vi.mock("next/navigation", () => ({ usePathname: () => "/stale-alerts" }));
+
 describe("dashboard shell", () => {
   it("marks the current route and renders all navigation destinations", () => {
     render(<AppShell>Page content</AppShell>);
@@ -14,6 +16,7 @@ describe("dashboard shell", () => {
       within(nav).getByRole("link", { name: "Dashboard" }),
     ).not.toHaveAttribute("aria-current");
   });
+
   it("opens the mobile dialog and closes on navigation, cancel, and backdrop", () => {
     render(<AppShell>Content</AppShell>);
     const trigger = screen.getByRole("button", { name: "Open navigation" });

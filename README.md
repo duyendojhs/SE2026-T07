@@ -12,8 +12,8 @@ An AI-augmented engineering analytics platform designed to detect student collab
 ## Repository Structure
 
 - `backend/` — FastAPI services, rate-limited GitHub client, rule engine, and audit logs.
-- `frontend/` — Next.js 14 dashboard skeleton; dashboard features start in S3.
-- `docs/` — build contract, architecture decisions, and technical specifications.
+- `frontend/` — Next.js 14 dashboard app (feature-based architecture); full dashboard live data starts in S3.
+- `docs/` — build contract, architecture decisions, task records, and technical specifications.
 - `.ai/` — AI agent directives (`AGENTS.md`).
 
 ## Quick Start
@@ -56,7 +56,7 @@ unit tests and fixture backfill still run; live App installation and sync return
 
 ```bash
 cd frontend
-npm install
+npm ci
 npm run dev
 ```
 

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { PageHeader } from "@/components/layout/PageHeader";
+import { PageHeader } from "@/shared/components/layout";
 
 export default function NotFound(): React.JSX.Element {
   return (
