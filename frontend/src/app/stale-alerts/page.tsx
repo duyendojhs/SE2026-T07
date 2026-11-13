@@ -1,4 +1,5 @@
-import { parseDashboardRange, sampleDashboard } from "@/features/dashboard";
+import { parseDashboardRange } from "@/domain/analytics";
+import { sampleDashboard } from "@/features/dashboard";
 import { StaleAlertsView } from "@/features/stale-alerts";
 
 export const metadata = { title: "Stale Alerts" };

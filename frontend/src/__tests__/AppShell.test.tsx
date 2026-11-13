@@ -5,6 +5,18 @@ import { AppShell } from "@/shared/components/layout";
 vi.mock("next/navigation", () => ({ usePathname: () => "/stale-alerts" }));
 
 describe("dashboard shell", () => {
+  it("renders a composition slot without knowing which feature provides it", () => {
+    render(
+      <AppShell quotaSlot={<div data-testid="quota-slot">Quota</div>}>
+        Page content
+      </AppShell>,
+    );
+
+    expect(screen.getByRole("banner")).toContainElement(
+      screen.getByTestId("quota-slot"),
+    );
+  });
+
   it("marks the current route and renders all navigation destinations", () => {
     render(<AppShell>Page content</AppShell>);
     const nav = screen.getByRole("navigation", { name: "Main navigation" });

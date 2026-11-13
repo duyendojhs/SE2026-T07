@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { PageHeader } from "@/shared/components/layout/PageHeader";
-import type { CollaborationAlert, DashboardRange } from "@/features/dashboard";
+import type { CollaborationAlert, DashboardRange } from "@/domain/analytics";
 import { AlertCard } from "./AlertCard";
 
 export function StaleAlertsView({

@@ -1,3 +1,19 @@
+import type { ActivityDay, DashboardRange } from "@/domain/analytics";
+
+export function selectHeatmapActivity(
+  activity: ActivityDay[],
+  range: DashboardRange,
+  year: number,
+): { activity: ActivityDay[]; period: string } {
+  const selectedActivity = activity.slice(range === "3d" ? -3 : -7);
+  return {
+    activity: selectedActivity,
+    period: selectedActivity.length
+      ? `${selectedActivity[0].date} – ${selectedActivity[selectedActivity.length - 1].date} ${year}`
+      : "No activity",
+  };
+}
+
 export const heatmapRows = [
   { key: "commits", label: "Commits" },
   { key: "pullRequests", label: "PRs opened" },

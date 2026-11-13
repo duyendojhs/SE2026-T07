@@ -1,4 +1,4 @@
-import type { CollaborationAlert } from "@/features/dashboard";
+import type { CollaborationAlert } from "@/domain/analytics";
 
 export function AlertCard({
   alert,

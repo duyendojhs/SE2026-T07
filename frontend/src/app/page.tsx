@@ -1,8 +1,5 @@
-import {
-  DashboardView,
-  parseDashboardRange,
-  sampleDashboard,
-} from "@/features/dashboard";
+import { DashboardView, sampleDashboard } from "@/features/dashboard";
+import { parseDashboardRange } from "@/domain/analytics";
 
 export const metadata = { title: "Dashboard" };
 

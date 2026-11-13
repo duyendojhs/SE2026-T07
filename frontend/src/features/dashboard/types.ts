@@ -1,22 +1,7 @@
-export type DashboardRange = "7d" | "3d";
+import type { ActivityDay, CollaborationAlert } from "@/domain/analytics";
 
-export type ActivityDay = {
-  day: string;
-  date: string;
-  commits: number;
-  pullRequests: number;
-  mergedPullRequests: number;
-  reviews: number;
+export type DashboardActivityDay = ActivityDay & {
   reviewWaitHours: number[];
-};
-
-export type CollaborationAlert = {
-  id: string;
-  title: string;
-  reason: string;
-  rule: string;
-  metric: string;
-  label: string;
 };
 
 export type DashboardData = {
@@ -25,7 +10,7 @@ export type DashboardData = {
   year: number;
   awaitingReview: number;
   alerts: CollaborationAlert[];
-  activity: ActivityDay[];
+  activity: DashboardActivityDay[];
 };
 
 export type DashboardMetric = {
@@ -34,4 +19,14 @@ export type DashboardMetric = {
   hint: string;
   color: string;
   scope: string;
+};
+
+export type ActivitySummary = {
+  activity: DashboardActivityDay[];
+  period: string;
+  merged: number;
+  reviews: number;
+  opened: number;
+  medianWait: number | null;
+  staleCount: number;
 };

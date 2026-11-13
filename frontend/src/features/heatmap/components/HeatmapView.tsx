@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { PageHeader } from "@/shared/components/layout/PageHeader";
 import { Panel } from "@/shared/components/ui/Panel";
-import type { ActivityDay, DashboardRange } from "@/features/dashboard";
+import type { ActivityDay, DashboardRange } from "@/domain/analytics";
 import { HeatmapTable } from "./HeatmapTable";
 import { HeatmapLegend } from "./HeatmapLegend";
 

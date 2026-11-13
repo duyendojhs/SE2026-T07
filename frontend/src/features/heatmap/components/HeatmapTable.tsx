@@ -1,4 +1,4 @@
-import type { ActivityDay } from "@/features/dashboard";
+import type { ActivityDay } from "@/domain/analytics";
 import { heatmapRows, activityColor } from "../model";
 
 export function HeatmapTable({

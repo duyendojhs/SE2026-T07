@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { AppShell } from "@/shared/components/layout";
-import { sampleQuota } from "@/features/telemetry";
+import { RateLimitGauge, sampleQuota } from "@/features/telemetry";
 
 export const metadata: Metadata = {
   title: {
@@ -17,7 +17,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <AppShell quota={sampleQuota}>{children}</AppShell>
+        <AppShell quotaSlot={<RateLimitGauge quota={sampleQuota} />}>
+          {children}
+        </AppShell>
       </body>
     </html>
   );

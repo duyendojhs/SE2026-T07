@@ -1,10 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  median,
-  parseDashboardRange,
-  selectDashboard,
-  sampleDashboard,
-} from "@/features/dashboard";
+import { median, selectDashboard, sampleDashboard } from "@/features/dashboard";
 
 describe("dashboard calculations", () => {
   it("calculates median without changing input and excludes invalid durations", () => {
@@ -33,11 +28,5 @@ describe("dashboard calculations", () => {
     expect(
       selectDashboard({ ...sampleDashboard, activity: [] }, "7d"),
     ).toMatchObject({ merged: 0, medianWait: null, period: "No activity" });
-  });
-
-  it("normalizes URL ranges", () => {
-    expect(parseDashboardRange("3d")).toBe("3d");
-    expect(parseDashboardRange("unknown")).toBe("7d");
-    expect(parseDashboardRange(["3d"])).toBe("7d");
   });
 });

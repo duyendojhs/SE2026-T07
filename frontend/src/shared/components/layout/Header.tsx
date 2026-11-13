@@ -5,16 +5,14 @@ import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
 import type { RefObject } from "react";
 import { navigation } from "@/shared/config/navigation";
-import { RateLimitGauge } from "@/features/telemetry";
-import type { RateLimitQuota } from "@/features/telemetry";
 
 export function Header({
-  quota,
+  quotaSlot,
   open,
   onOpen,
   menuButtonRef,
 }: {
-  quota: RateLimitQuota | null;
+  quotaSlot?: React.ReactNode;
   open: boolean;
   onOpen: () => void;
   menuButtonRef: RefObject<HTMLButtonElement>;
@@ -54,7 +52,7 @@ export function Header({
           </nav>
         </div>
       </div>
-      <RateLimitGauge quota={quota} />
+      {quotaSlot}
     </header>
   );
 }

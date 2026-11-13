@@ -1,8 +1,9 @@
-import type { ActivityDay, DashboardData, DashboardRange } from "./types";
-
-export function parseDashboardRange(value?: string | string[]): DashboardRange {
-  return value === "3d" ? "3d" : "7d";
-}
+import type { DashboardRange } from "@/domain/analytics";
+import type {
+  ActivitySummary,
+  DashboardActivityDay,
+  DashboardData,
+} from "./types";
 
 export function median(values: number[]): number | null {
   const sorted = values
@@ -18,16 +19,10 @@ export function median(values: number[]): number | null {
 export function selectDashboard(
   data: DashboardData,
   range: DashboardRange,
-): {
-  activity: ActivityDay[];
-  period: string;
-  merged: number;
-  reviews: number;
-  opened: number;
-  medianWait: number | null;
-  staleCount: number;
-} {
-  const activity = data.activity.slice(range === "3d" ? -3 : -7);
+): ActivitySummary {
+  const activity: DashboardActivityDay[] = data.activity.slice(
+    range === "3d" ? -3 : -7,
+  );
   return {
     activity,
     period: activity.length

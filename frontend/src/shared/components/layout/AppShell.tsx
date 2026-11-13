@@ -2,17 +2,15 @@
 
 import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
-
-import type { RateLimitQuota } from "@/features/telemetry";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 
 export function AppShell({
   children,
-  quota = null,
+  quotaSlot,
 }: {
   children: React.ReactNode;
-  quota?: RateLimitQuota | null;
+  quotaSlot?: React.ReactNode;
 }): React.JSX.Element {
   const [open, setOpen] = useState(false);
   const dialog = useRef<HTMLDialogElement>(null);
@@ -73,7 +71,7 @@ export function AppShell({
       </dialog>
       <div className="lg:pl-64">
         <Header
-          quota={quota}
+          quotaSlot={quotaSlot}
           open={open}
           onOpen={() => setOpen(true)}
           menuButtonRef={menuButton}

@@ -1,4 +1,4 @@
-import type { ActivityDay } from "../types";
+import type { ActivityDay } from "@/domain/analytics";
 
 const series = [
   { key: "pullRequests", label: "PRs opened", color: "bg-primary" },

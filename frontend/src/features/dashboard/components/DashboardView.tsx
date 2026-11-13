@@ -5,10 +5,11 @@ import { useState } from "react";
 import { ArrowRight, GitPullRequest } from "lucide-react";
 import { Panel } from "@/shared/components/ui/Panel";
 import { PageHeader } from "@/shared/components/layout/PageHeader";
+import type { DashboardRange } from "@/domain/analytics";
 import { selectDashboard } from "../model";
 import { ActivityChart } from "./ActivityChart";
 import { MetricsGrid } from "./MetricsGrid";
-import type { DashboardData, DashboardMetric, DashboardRange } from "../types";
+import type { DashboardData, DashboardMetric } from "../types";
 
 export function DashboardView({
   data,
