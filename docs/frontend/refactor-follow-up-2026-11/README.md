@@ -12,6 +12,9 @@ or a new analytics product feature.
 
 ## Follow-up documents
 
+- [Documentation clarifications](documentation-clarifications.md): verified
+  differences between older frontend documents and the current code, with
+  pointers to code evidence and guidance for reading historical records.
 - [Architecture decisions](architecture-decisions.md): current dependency
   direction, decisions, trade-offs, status, and code evidence.
 - [Change log](change-log.md): baseline, implementation and archive commits,
@@ -42,5 +45,7 @@ source commit [`6cc63d7`](https://github.com/duyendojhs/SE2026-T07/commit/6cc63d
 [original architecture](../../../frontend/docs/architecture.md), and
 [original task 8 record](../../../frontend/docs/tasks/008-frontend-scaffold.md).
 The three archived files are verbatim history, not current architecture
-guidance. Clarifications in this set supplement the reviewed documents; they do
-not revise their historical content.
+guidance. The older documents were preserved unchanged as records of the state
+they described. Read them together with [documentation clarifications](documentation-clarifications.md)
+to identify statements that no longer describe the current code. The
+clarifications supplement those documents; they do not revise their content.

@@ -13,15 +13,45 @@
 
 ## Changes by commit
 
-| Commit                                                                                                                                                                                              | Purpose and paths                                                                                                                                                                                                                                                                                                | Behavior retained                                                                                                                                                                     | Tests and evidence                                                                                                                                                                                                                                                                                                                                                                                             |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [`62568c4f235dd3f5d04b358297af8c52b6c8fc7f`](https://github.com/duyendojhs/SE2026-T07/commit/62568c4f235dd3f5d04b358297af8c52b6c8fc7f) — `refactor(frontend): separate analytics domain contracts`  | Added `frontend/src/domain/analytics`; returned Dashboard fixture/types/model to `features/dashboard`; moved Heatmap period projection into `features/heatmap`; changed route imports to domain contracts; passed telemetry to generic shell through a slot; added domain, heatmap, slot, and stale-route tests. | `/`, `/heatmap`, `/stale-alerts`, `/audit-logs`; legacy `/collaboration-heatmap` redirect; fixture content and 3/7-day filter behavior; mobile drawer interactions; privacy boundary. | [verification matrix](verification-evidence.md); [domain tests](../../../frontend/src/__tests__/analytics-domain.test.ts); [Dashboard tests](../../../frontend/src/__tests__/dashboard-model.test.ts); [Heatmap tests](../../../frontend/src/__tests__/heatmap-model.test.ts); [shell tests](../../../frontend/src/__tests__/AppShell.test.tsx); [page tests](../../../frontend/src/__tests__/pages.test.tsx). |
-| [`7ffb27d6b8cb688c15ea078ac2efc76ce856df24`](https://github.com/duyendojhs/SE2026-T07/commit/7ffb27d6b8cb688c15ea078ac2efc76ce856df24) — `docs(frontend): restore legacy task 8 documents verbatim` | Restored `frontend/docs/README.md`, `frontend/docs/architecture.md`, and `frontend/docs/tasks/008-frontend-scaffold.md`; added `frontend/docs/archive-index.md`.                                                                                                                                                 | Restored copies remain historical records; current root `docs/` pages were not changed.                                                                                               | Each restored blob hash matches its path at source commit `6cc63d7`; see the hash table below. Archive index formatting check passed.                                                                                                                                                                                                                                                                          |
+### `62568c4f235dd3f5d04b358297af8c52b6c8fc7f` — `refactor(frontend): separate analytics domain contracts`
 
-The supplemental decision/evidence documents in this directory are committed
-separately from code and archive restoration. Their commit SHA is recorded in
-the final repository history and completion report; no GitHub issue state or
-remote branch is changed here.
+[Commit](https://github.com/duyendojhs/SE2026-T07/commit/62568c4f235dd3f5d04b358297af8c52b6c8fc7f)
+
+- **Purpose and paths:** Added `frontend/src/domain/analytics`; returned Dashboard
+  fixture, types, and model to `features/dashboard`; moved Heatmap period
+  projection into `features/heatmap`; changed route imports to domain contracts;
+  passed telemetry to the generic shell through a slot; added domain, Heatmap,
+  slot, and stale-route tests.
+- **Behavior retained:** `/`, `/heatmap`, `/stale-alerts`, `/audit-logs`; legacy
+  `/collaboration-heatmap` redirect; fixture content and 3/7-day filter behavior;
+  mobile drawer interactions; privacy boundary.
+- **Tests and evidence:** [verification evidence](verification-evidence.md),
+  [domain tests](../../../frontend/src/__tests__/analytics-domain.test.ts),
+  [Dashboard tests](../../../frontend/src/__tests__/dashboard-model.test.ts),
+  [Heatmap tests](../../../frontend/src/__tests__/heatmap-model.test.ts),
+  [shell tests](../../../frontend/src/__tests__/AppShell.test.tsx), and
+  [page tests](../../../frontend/src/__tests__/pages.test.tsx).
+
+### `7ffb27d6b8cb688c15ea078ac2efc76ce856df24` — `docs(frontend): restore legacy task 8 documents verbatim`
+
+[Commit](https://github.com/duyendojhs/SE2026-T07/commit/7ffb27d6b8cb688c15ea078ac2efc76ce856df24)
+
+- **Purpose and paths:** Restored `frontend/docs/README.md`,
+  `frontend/docs/architecture.md`, and
+  `frontend/docs/tasks/008-frontend-scaffold.md`; added
+  `frontend/docs/archive-index.md`.
+- **Behavior retained:** Restored copies remain historical records; current
+  root `docs/` pages were not changed.
+- **Evidence:** Each restored blob hash matches its path at source commit
+  `6cc63d7`; see the hash table below. Archive index formatting check passed.
+
+### `491794ab27e3976b57e94fa6b812fc2b892f2f01` — `docs(frontend): add refactor follow-up decisions and evidence`
+
+- **Purpose and paths:** Added the supplemental architecture decisions,
+  change log, verification evidence, next-steps document, and README index in
+  this directory.
+- **Evidence and status:** Committed separately from code and archive
+  restoration. No GitHub issue state or remote branch was changed.
 
 ## Verbatim archive evidence
 

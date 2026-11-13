@@ -13,18 +13,96 @@
 - **Evidence type:** local commands and local HTTP responses. No CI run/link is
   available for this commit.
 
-## Acceptance matrix
+## Acceptance summary
 
-| Acceptance criterion                                                       | Implementation path                                                                    | Test/check                                                                                                   | Exact local result or evidence                                                                                                                                                                     | Status           |
-| -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
-| Shared contracts are pure and consumed without feature-to-feature imports. | `frontend/src/domain/analytics/`; Dashboard, Heatmap, and Stale Alerts feature modules | `src/__tests__/analytics-domain.test.ts`; `npm run typecheck`; dependency import review                      | Domain contracts and range tests passed; typecheck exited 0; no `features/analytics` module remains.                                                                                               | Verified locally |
-| Dashboard model and fixture remain Dashboard-owned.                        | `frontend/src/features/dashboard/{types.ts,model.ts,data.ts}`                          | `src/__tests__/dashboard-model.test.ts`, `src/__tests__/DashboardView.test.tsx`                              | Existing median, selected-period totals, 3/7-day filter, fixture content, and preview limit assertions passed as part of 29/29 tests.                                                              | Verified locally |
-| Heatmap keeps the selected 3/7-day activity period.                        | `frontend/src/features/heatmap/model.ts`; `src/app/heatmap/page.tsx`                   | `src/__tests__/heatmap-model.test.ts`; Dashboard interaction test                                            | 3-day/7-day selection and empty-period cases passed; route test retained `/heatmap?range=3d` flow.                                                                                                 | Verified locally |
-| Telemetry slot crosses root-layout/client-shell composition.               | `src/app/layout.tsx`; `shared/components/layout/{AppShell.tsx,Header.tsx}`             | AppShell slot test; `npm run build`                                                                          | Slot assertion passed; Next.js 14.2.35 production build compiled and generated all 7 pages.                                                                                                        | Verified locally |
-| Routes and redirect retain expected responses.                             | `src/app/`; `frontend/next.config.mjs`                                                 | Page and interaction tests; local HTTP GET checks                                                            | `/`, `/heatmap`, `/stale-alerts`, `/audit-logs`: HTTP 200. `/collaboration-heatmap`: HTTP 308, `Location: http://127.0.0.1:3000/heatmap`.                                                          | Verified locally |
-| Automated frontend acceptance suite passes.                                | Frontend app and test suite                                                            | `npm run lint`; `npm run typecheck`; `npm run format:check`; `npm test`; `npm run build`; `git diff --check` | Lint: no ESLint warnings/errors. Typecheck: exit 0. Format: all matched files use Prettier style. Tests: 11 files passed, 29 tests passed. Build: compiled, generated 7 pages. Diff check: exit 0. | Verified locally |
-| Desktop/mobile shell is visually usable at 1440×900 and 390×844.           | `src/shared/components/layout/{AppShell.tsx,Header.tsx,Sidebar.tsx}`                   | Browser viewport QA requested; Computer Use attempt                                                          | **Not verified in browser.** Computer Use reported it was not approved for Cốc Cốc; the browser access host then reported unavailable. No screenshot was captured and no visual pass is claimed.   | Not verified     |
-| CI is green for this commit.                                               | `.github/workflows/ci.yml`                                                             | CI run/link                                                                                                  | No CI run or URL was available. The workflow specifies Node 22; local verification used Node 26.3.1.                                                                                               | Not verified     |
+| Acceptance criterion                                                       | Status           | Evidence details                                  |
+| -------------------------------------------------------------------------- | ---------------- | ------------------------------------------------- |
+| Shared contracts are pure and consumed without feature-to-feature imports. | Verified locally | [Shared contracts](#1-shared-contracts)           |
+| Dashboard model and fixture remain Dashboard-owned.                        | Verified locally | [Dashboard model](#2-dashboard-model-and-fixture) |
+| Heatmap keeps the selected 3/7-day activity period.                        | Verified locally | [Heatmap period](#3-heatmap-period)               |
+| Telemetry slot crosses root-layout/client-shell composition.               | Verified locally | [Telemetry slot](#4-telemetry-slot)               |
+| Routes and redirect retain expected responses.                             | Verified locally | [Routes and redirect](#5-routes-and-redirect)     |
+| Automated frontend acceptance suite passes.                                | Verified locally | [Automated checks](#6-automated-frontend-checks)  |
+| Desktop/mobile shell is visually usable at 1440×900 and 390×844.           | **Not verified** | [Visual viewport QA](#7-visual-viewport-qa)       |
+| CI is green for this commit.                                               | **Not verified** | [CI](#8-ci)                                       |
+
+## Detailed evidence
+
+### 1. Shared contracts
+
+- **Implementation:** `frontend/src/domain/analytics/`; Dashboard, Heatmap, and
+  Stale Alerts feature modules.
+- **Checks:** `src/__tests__/analytics-domain.test.ts`, `npm run typecheck`, and
+  dependency import review.
+- **Exact result:** Domain contracts and range tests passed; typecheck exited 0;
+  no `features/analytics` module remains.
+- **Status:** Verified locally.
+
+### 2. Dashboard model and fixture
+
+- **Implementation:**
+  `frontend/src/features/dashboard/{types.ts,model.ts,data.ts}`.
+- **Checks:** `src/__tests__/dashboard-model.test.ts` and
+  `src/__tests__/DashboardView.test.tsx`.
+- **Exact result:** Existing median, selected-period totals, 3/7-day filter,
+  fixture content, and preview limit assertions passed as part of 29/29 tests.
+- **Status:** Verified locally.
+
+### 3. Heatmap period
+
+- **Implementation:** `frontend/src/features/heatmap/model.ts` and
+  `src/app/heatmap/page.tsx`.
+- **Checks:** `src/__tests__/heatmap-model.test.ts` and Dashboard interaction
+  test.
+- **Exact result:** 3-day/7-day selection and empty-period cases passed; route
+  test retained `/heatmap?range=3d` flow.
+- **Status:** Verified locally.
+
+### 4. Telemetry slot
+
+- **Implementation:** `src/app/layout.tsx` and
+  `shared/components/layout/{AppShell.tsx,Header.tsx}`.
+- **Checks:** AppShell slot test and `npm run build`.
+- **Exact result:** Slot assertion passed; Next.js 14.2.35 production build
+  compiled and generated all 7 pages.
+- **Status:** Verified locally.
+
+### 5. Routes and redirect
+
+- **Implementation:** `src/app/` and `frontend/next.config.mjs`.
+- **Checks:** Page and interaction tests; local HTTP GET checks.
+- **Exact result:** `/`, `/heatmap`, `/stale-alerts`, `/audit-logs`: HTTP 200.
+  `/collaboration-heatmap`: HTTP 308,
+  `Location: http://127.0.0.1:3000/heatmap`.
+- **Status:** Verified locally.
+
+### 6. Automated frontend checks
+
+- **Implementation:** Frontend app and test suite.
+- **Commands:** `npm run lint`; `npm run typecheck`;
+  `npm run format:check`; `npm test`; `npm run build`; `git diff --check`.
+- **Exact results:** Lint: no ESLint warnings/errors. Typecheck: exit 0. Format:
+  all matched files use Prettier style. Tests: 11 files passed, 29 tests
+  passed. Build: compiled, generated 7 pages. Diff check: exit 0.
+- **Status:** Verified locally.
+
+### 7. Visual viewport QA
+
+- **Requested viewports:** desktop 1440×900 and mobile 390×844.
+- **Attempt:** Browser viewport QA was requested through Computer Use; access to
+  Cốc Cốc was not approved, then the browser access host reported unavailable.
+- **Exact result:** **Not verified in browser.** No screenshot was captured and
+  no visual pass is claimed. Automated component/build checks do not establish
+  responsive appearance at these viewports.
+- **Status:** Not verified.
+
+### 8. CI
+
+- **Expected check:** CI run/link for this commit, using the workflow in
+  `.github/workflows/ci.yml`.
+- **Exact result:** No CI run or URL was available. The workflow specifies Node
+  22; local verification used Node 26.3.1.
+- **Status:** Not verified; no CI pass is claimed.
 
 ## Scope limitations
 
