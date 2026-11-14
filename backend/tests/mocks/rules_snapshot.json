@@ -1,0 +1,17 @@
+{
+  "now": "2026-11-12T00:00:00Z",
+  "pull_requests": [
+    {"number": 1, "state": "open", "last_activity_at": "2026-11-11T12:00:00Z", "is_draft": false},
+    {"number": 2, "state": "open", "last_activity_at": "2026-11-09T00:00:00Z", "is_draft": false},
+    {"number": 3, "state": "open", "last_activity_at": "2026-11-08T23:59:59Z", "is_draft": false},
+    {"number": 4, "state": "open", "last_activity_at": "2026-11-05T00:00:00Z", "is_draft": false},
+    {"number": 5, "state": "closed", "last_activity_at": "2026-10-01T00:00:00Z", "is_draft": false},
+    {"number": 6, "state": "merged", "last_activity_at": "2026-10-02T00:00:00Z", "is_draft": false},
+    {"number": 7, "state": "open", "last_activity_at": "2026-11-01T00:00:00Z", "is_draft": true}
+  ],
+  "issues": [
+    {"number": 10, "state": "open", "last_activity_at": "2026-11-04T00:00:00Z"},
+    {"number": 11, "state": "open", "last_activity_at": "2026-11-10T00:00:00Z"},
+    {"number": 12, "state": "closed", "last_activity_at": "2026-09-01T00:00:00Z"}
+  ]
+}
