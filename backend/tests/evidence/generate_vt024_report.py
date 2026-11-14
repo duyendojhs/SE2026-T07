@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import re
-import textwrap
 from pathlib import Path
 
 from reportlab.lib import colors
@@ -240,40 +239,68 @@ def main_pages() -> list:
     return story, reflection_words
 
 
-def appendix(story: list, title: str, files: list[str], intro: str = "") -> None:
-    story += [p(title, "AppendixVN")]
-    if intro:
-        story += [p(intro, "SmallVN")]
-    for rel in files:
-        path = EVIDENCE / rel
-        if not path.exists():
-            raise FileNotFoundError(path)
-        content = path.read_text(encoding="utf-8", errors="replace").strip()
-        source_path = f"backend/tests/{rel[3:]}" if rel.startswith("../") else f"backend/tests/evidence/{rel}"
-        wrapped = "\n".join(
-            textwrap.fill(line, width=118, subsequent_indent="  ", replace_whitespace=False, drop_whitespace=True)
-            if len(line) > 118 else line
-            for line in content.splitlines()
-        )
-        wrapped_lines = wrapped.splitlines()
-        chunks = [wrapped_lines[start : start + 52] for start in range(0, len(wrapped_lines), 52)] or [[]]
-        for chunk_index, chunk in enumerate(chunks):
-            if chunk_index == 0:
-                story += [p(f"Nguồn: {source_path}", "H2VN")]
-            story += [Preformatted("\n".join(chunk), styles["CodeVN"], maxLineLength=118)]
-        story += [Spacer(1, 4 * mm)]
+def repo_link(path: str, label: str | None = None) -> str:
+    href = f"https://github.com/duyendojhs/SE2026-T07/blob/bt3-23001819-vt024-retry/{path}"
+    return f"<link href='{href}' color='#0B7776'>{label or path}</link>"
 
 
 def appendix_pages() -> list:
-    story = [p("PHỤ LỤC · HỒ SƠ BẰNG CHỨNG", "H1VN"), p("Phần này nằm sau nội dung chính; log gốc vẫn được lưu nguyên trong repository.", "SmallVN")]
-    appendix(story, "A. AI Usage Log", ["vt024-ai-usage-log.md"], "Nhật ký đầy đủ: kế hoạch ban đầu, quyết định review, RED/GREEN, oracle, mutation, coverage, performance và rủi ro thiếu ngữ cảnh.")
-    appendix(story, "B. RED execution evidence", ["vt024-red-context.txt", "vt024-red.txt"], "Log RED gốc được giữ nguyên; thể hiện test trước bản vá và các failure mong đợi.")
-    appendix(story, "C. GREEN execution evidence", ["vt024-green-context.txt", "vt024-green.txt", "vt024-final-tests.txt", "vt024-final-ruff.txt", "vt024-mypy.txt"], "Bao gồm targeted GREEN, Hypothesis statistics, full suite cuối, Ruff và limitation mypy.")
-    appendix(story, "D. Mutation diff and kill output", ["vt024-mutation.txt", "vt024-mutation-diff.patch", "vt024-mutation-removal.txt"], "Mutant chỉ được dùng trong thí nghiệm; bản vá và output thất bại của regression được lưu.")
-    appendix(story, "E. Coverage report and risk mapping", ["vt024-coverage-run.txt", "vt024-coverage-report.txt", "vt024-coverage-review.md"], "Coverage giới hạn ở client và backfill; review ghi rõ statement, branch, combined và nhánh thiếu.")
-    appendix(story, "F. Flaky-test evidence", ["vt024-flaky-orders.txt", "vt024-flaky-review.md", "vt024-hypothesis-final.txt"], "Hai thứ tự test, chính sách time/backoff, Hypothesis invalid counts và giới hạn đã quan sát.")
-    appendix(story, "G. Performance harness and output", ["../perf_retry_harness.py", "vt024-performance.txt"], "Harness có barrier 100 worker; latency nearest-rank tính trên toàn bộ outcome, gồm 5 exhausted.")
-    appendix(story, "H. Commands, traceability and commit history", ["vt024-traceability.md", "vt024-phase4-context.txt"], "Các lệnh kiểm tra và commit đầy đủ được giữ trong log/traceability của repository.")
+    story = [
+        p("PHỤ LỤC A · NHẬT KÝ AI TÓM TẮT", "H1VN"),
+        p("Bản tóm tắt ghi lại yêu cầu, đóng góp AI, quyết định của người review và vị trí bằng chứng. Nhật ký gốc không bị sửa.", "SmallVN"),
+    ]
+    usage_rows = [
+        ["Giai đoạn / prompt chính", "Đầu ra AI và quyết định review của con người", "Bằng chứng gốc"],
+        ["Kế hoạch và RED", "Yêu cầu: kiểm tra hợp đồng client, viết test trước, giới hạn retry ở GET an toàn. AI đề xuất lát cắt nhỏ; reviewer yêu cầu giữ RED nguyên. Bốn test retry thất bại; characterization persistence đã pass baseline.", repo_link("backend/tests/evidence/vt024-red.txt")],
+        ["Oracle Hypothesis", "Đề xuất ban đầu đòi GitHubAPIError sau exhaustion. Reviewer đối chiếu public behavior: httpx transport exception được truyền nguyên. Oracle sửa sang TransportError, vẫn giữ giới hạn số lần thử và yêu cầu không trả success.", repo_link("backend/tests/evidence/vt024-ai-usage-log.md", "AI Usage Log đầy đủ")],
+        ["Bản vá và GREEN", "Human approval: chỉ sửa GitHubClient, retry ConnectError/TimeoutException cho GET và giữ backoff hiện hữu; không retry workflow hay unsafe methods. Targeted suite 14 pass; full suite cuối 49 pass; Ruff pass.", repo_link("backend/tests/evidence/vt024-green.txt")],
+        ["Mutation, coverage, perf", "Reviewer duyệt coverage.py như dev dependency và yêu cầu tách statement/branch. Test persistence giết mutant false-success. AI tóm tắt perf sai 85/10/5; phép tính nguồn được sửa thành 90/5/5.", repo_link("backend/tests/evidence/vt024-phase4-context.txt")],
+        ["Giả định AI bị sửa", "Hai ví dụ: (1) đòi exception type GitHubAPIError không đúng contract; (2) kỳ vọng body lỗi API là JSON nhưng Starlette trả plain text. Cả hai được kiểm tra với code/output thật. Không tuyên bố mypy pass vì thiếu package.", repo_link("backend/tests/evidence/vt024-traceability.md", "Traceability và commit")],
+    ]
+    story += [table(usage_rows, [36 * mm, 99 * mm, 39 * mm], font="CaseCellVN"), Spacer(1, 2 * mm)]
+    story += [p("Human checkpoints: duyệt patch tối thiểu (3A/3B), GREEN (4), mutation/coverage/performance (5), source-integrity review (6), hiệu chỉnh báo cáo (7B), và gửi Draft PR #15. Không có thay đổi log gốc trong lần rút gọn này.", "SmallVN")]
+    story += [
+        p("PHỤ LỤC B · RED, GREEN VÀ MUTATION", "H1VN"),
+        p("Chỉ trích kết quả và thông báo lỗi liên quan; toàn bộ terminal logs cùng traceback vẫn được giữ trong repository.", "SmallVN"),
+    ]
+    red_rows = [
+        ["RED test thất bại", "Thông báo / kết quả quan sát"],
+        ["test_read_timeout_is_retried_then_succeeds", "httpx.ReadTimeout: temporary timeout"],
+        ["test_connection_error_is_retried_then_succeeds", "httpx.ConnectError: temporary connection error"],
+        ["test_transient_http_error_on_post_is_not_retried", "AssertionError: POST bị gửi quá một lần"],
+        ["test_timeout_retry_is_bounded_and_returns_only_after_success", "Property fail khi exhaustion truyền httpx transport exception; oracle sau đó được sửa đúng contract."],
+    ]
+    story += [table(red_rows, [80 * mm, 94 * mm], font="CaseCellVN")]
+    story += [p("Phân biệt baseline: test_commit_failure_never_returns_success_and_recovery_is_consistent đã PASS trước patch. Trong mutation experiment, chính test này giết mutant: <font name='Segoe-Bold'>Failed: DID NOT RAISE SQLAlchemyError</font>. Đây không phải một trong bốn RED failure.", "SmallVN")]
+    story += [p(f"RED source: {repo_link('backend/tests/evidence/vt024-red.txt')} · GREEN source: {repo_link('backend/tests/evidence/vt024-green.txt')} · mutation source: {repo_link('backend/tests/evidence/vt024-mutation.txt')} · mutant diff: {repo_link('backend/tests/evidence/vt024-mutation-diff.patch')}", "SmallVN")]
+    story += [p("Lệnh tái hiện RED và targeted GREEN (chạy từ backend):", "H2VN")]
+    story += [Preformatted(r".\.venv\Scripts\python.exe -m pytest -q --hypothesis-show-statistics tests/test_rate_limit.py tests/test_backfill.py", styles["CodeVN"])]
+    story += [p(r"Kết quả: RED có đúng 4 failure trên; persistence characterization pass baseline. Sau patch: targeted 14 passed; Hypothesis retry 40 pass/2 invalid, idempotency 30 pass/4 invalid, 0 failing examples. Lệnh regression cuối: <font name='Courier'>.\.venv\Scripts\python.exe -m pytest -q</font> → 49 passed, 1 deprecation warning. Ruff → All checks passed; mypy unavailable.", "SmallVN")]
+    story += [p("Lệnh mutation (PowerShell, chạy từ backend):", "H2VN"), Preformatted(".\\.venv\\Scripts\\python.exe -m pytest -q `\n  tests/test_backfill.py::test_commit_failure_never_returns_success_and_recovery_is_consistent", styles["CodeVN"])]
+    story += [PageBreak()]
+
+    story += [
+        p("PHỤ LỤC C · COVERAGE VÀ PERFORMANCE", "H1VN"),
+        p("Coverage chỉ bao gồm hai module của vertical slice; performance là thử nghiệm mock trong process.", "SmallVN"),
+    ]
+    coverage_rows = [
+        ["Module", "Statements", "Branches", "Combined"],
+        ["GitHubClient", "95/121 · 78.51%", "31/50 · 62.00%", "73.68%"],
+        ["BackfillService", "151/163 · 92.64%", "35/40 · 87.50%", "91.63%"],
+        ["Tổng đã chọn", "246/284 · 86.62%", "66/90 · 73.33%", "83.42%"],
+    ]
+    story += [table(coverage_rows, [43 * mm, 43 * mm, 43 * mm, 45 * mm], font="CaseCellVN")]
+    story += [p("Risk mapping: AC-01 có test 5xx/timeout/ConnectError/bound; AC-02 có 401, unsafe POST/500, 403 exhaustion; AC-03 bảo vệ uniqueness business rows nhưng chưa assert số RawEvent/AuditLog; AC-04 service/API regression và mutant; AC-05 một nguồn lỗi, nguồn khác thành công. Thiếu trực tiếp: một số 404/generic 4xx, POST transport, all-resources-fail. Tỷ lệ không phải coverage toàn repo.", "SmallVN")]
+    perf_rows = [
+        ["Mock harness", "Kết quả"],
+        ["Tải và scenario", "100 worker đồng bộ bằng Barrier; 90 success ngay, 5 transient→success, 5 exhaustion cố ý."],
+        ["Requests/outcomes", "115 requests; 95 success, 5 exhaustion; max_retries=2."],
+        ["Latency", "p50 0.376 ms · p95 0.701 ms · max 1.131 ms; nearest-rank trên cả 100 task, gồm lỗi."],
+    ]
+    story += [table(perf_rows, [43 * mm, 131 * mm], font="CaseCellVN")]
+    story += [p("Giới hạn: MockTransport không blocking; backoff là no-op nên latency loại trừ thời gian chờ thật. Kết quả không chứng minh p95 production ≤ 3.0 giây, GitHub latency, database throughput hay end-to-end API concurrency. Không gọi GitHub thật.", "SmallVN")]
+    story += [p("Lệnh harness (chạy từ backend):", "H2VN"), Preformatted(r".\.venv\Scripts\python.exe tests\perf_retry_harness.py", styles["CodeVN"])]
+    story += [p(f"Nguồn: {repo_link('backend/tests/evidence/vt024-coverage-review.md')} · {repo_link('backend/tests/evidence/vt024-coverage-run.txt')} · {repo_link('backend/tests/evidence/vt024-coverage.json')} · {repo_link('backend/tests/evidence/vt024-performance.txt')} · {repo_link('backend/tests/perf_retry_harness.py')} · {repo_link('backend/tests/evidence/vt024-ai-usage-log.md')}", "SmallVN")]
     return story
 
 
