@@ -1,0 +1,19 @@
+VT-024 mutation-removal verification
+
+Branch: bt3-23001819-vt024-retry
+Baseline: 90f831c8c8afc84dd4f0268b7ed5704e41f32cbf
+HEAD at the Checkpoint 6 verification start: 5f1fcbb719a8efad847e58bca03dce406566bfae
+
+Commands run:
+1. `git status --short`
+2. `git diff 90f831c8c8afc84dd4f0268b7ed5704e41f32cbf HEAD -- backend/app/ingestion/backfill.py`
+3. `git show --stat e4e56c86b9dab3e3e3c2fbaf36b751f29e4b135a`
+
+Observed output:
+- `git status --short`: empty at the start of the review.
+- Baseline-to-HEAD diff for `backend/app/ingestion/backfill.py`: empty.
+- `git show --stat e4e56c86b9dab3e3e3c2fbaf36b751f29e4b135a`: 15 files changed, 393 insertions; the file list contains `backend/pyproject.toml`, tests, harness, and evidence files; it does not contain `backend/app/ingestion/backfill.py`.
+- The production `backfill.py` is unchanged on the assignment branch. Its only mutation text is preserved in the evidence patch `vt024-mutation-diff.patch`; the deliberate mutation is not in application source.
+- The mutation-killing test output remains preserved in `vt024-mutation.txt`.
+
+Note: the command SHA in item 3 is `e4e56c86b9dab3e3e3c2fbaf36b751f29e4b135a` (the quality-evidence commit).

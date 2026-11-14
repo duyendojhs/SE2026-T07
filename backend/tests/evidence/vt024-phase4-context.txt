@@ -45,7 +45,7 @@ Coverage
 - Command: `python -m coverage run --branch --source=app.github.client,app.ingestion.backfill -m pytest -q tests/test_rate_limit.py tests/test_backfill.py tests/test_tenants_sync_api.py`
 - Result: 15 passed.
 - Command: `python -m coverage report -m`
-- Results: client.py 74% statements; backfill.py 92%; combined 83% across these two selected production modules (90 branches, 20 partial). Coverage output is preserved in vt024-coverage-run.txt and vt024-coverage-report.txt.
+- The text report's 74%/92%/83% `Cover` values combine statements and branch arcs. Exact statement coverage is client.py 95/121 = 78.51%, backfill.py 151/163 = 92.64%, total 246/284 = 86.62%. Exact branch coverage is 31/50 = 62.00%, 35/40 = 87.50%, total 66/90 = 73.33%. Selected modules only; full machine-readable details are in vt024-coverage.json and interpretation/gaps in vt024-coverage-review.md.
 - This is scoped line and branch coverage for the selected vertical slice, not whole-repository coverage.
 
 Concurrent mocked performance harness
