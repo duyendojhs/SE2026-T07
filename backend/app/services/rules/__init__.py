@@ -1,6 +1,16 @@
 from __future__ import annotations
 
 from app.services.rules.base import BaseRule, RuleFinding
+from app.services.rules.models import IssueMeta, ItemState, PullRequestMeta, RepositorySnapshot
 from app.services.rules.stale import StaleIssueRule, StalePRRule
 
-__all__ = ["BaseRule", "RuleFinding", "StalePRRule", "StaleIssueRule"]
+__all__ = [
+    "BaseRule",
+    "RuleFinding",
+    "IssueMeta",
+    "ItemState",
+    "PullRequestMeta",
+    "RepositorySnapshot",
+    "StalePRRule",
+    "StaleIssueRule",
+]
