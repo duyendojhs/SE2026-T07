@@ -1,0 +1,16 @@
+VT-024 RED phase context
+
+Branch: bt3-23001819-vt024-retry
+Baseline SHA: 90f831c8c8afc84dd4f0268b7ed5704e41f32cbf
+Test command: .\.venv\Scripts\python.exe -m pytest -q --hypothesis-show-statistics tests/test_rate_limit.py tests/test_backfill.py
+GitHub API access: none; HTTP interactions used httpx.MockTransport.
+
+Environment versions:
+Python 3.13.5
+pytest 8.4.2
+hypothesis 6.170.15
+httpx 0.28.1
+sqlmodel 0.0.48
+fastapi 0.162.0
+
+Actual pytest output is recorded in vt024-red.txt.
