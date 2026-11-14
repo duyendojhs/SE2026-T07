@@ -6,6 +6,7 @@ import uuid
 from typing import Any, cast
 
 from fastapi import APIRouter, HTTPException, Request
+from sqlalchemy import update
 from sqlmodel import select
 
 from app.api.deps import DbSession
@@ -15,7 +16,7 @@ from app.core.config import settings
 from app.github.app_auth import GitHubAPIError, GitHubAppAuth, GitHubAppNotConfigured
 from app.github.client import GitHubClient
 from app.ingestion.backfill import BackfillService
-from app.models import AuditLog, Installation, Repository
+from app.models import AuditLog, Installation, Issue, Repository
 
 router = APIRouter(prefix="/api/v1/tenants/{slug}", tags=["tenants"])
 
@@ -94,6 +95,83 @@ def sync_repo(
         "counts": result.counts,
         "errors": result.errors,
         "backfill_days": settings.backfill_days,
+        "issue_title_undo_handles": result.issue_title_undo_handles,
+    }
+
+
+@router.post("/repos/{repo_id}/issues/{issue_id}/title/undo")
+def undo_issue_title(
+    session: DbSession,
+    request: Request,
+    slug: str,
+    repo_id: uuid.UUID,
+    issue_id: uuid.UUID,
+    sync_id: uuid.UUID,
+) -> dict[str, Any]:
+    current = require_tenant(slug, require_session(request))
+    require_role(current, "owner", "member")
+    tenant_id = _tenant_id(session, slug)
+    issue = session.exec(
+        select(Issue).where(
+            Issue.id == issue_id,
+            Issue.repo_id == repo_id,
+            Issue.tenant_id == tenant_id,
+        )
+    ).first()
+    if issue is None:
+        raise HTTPException(status_code=404, detail="issue not found")
+    if issue.title_change_sync_id != sync_id:
+        raise HTTPException(status_code=409, detail="undo handle is stale")
+    if issue.previous_title is None:
+        return {
+            "status": "already_undone",
+            "issue_id": str(issue.id),
+            "issue_number": issue.number,
+        }
+
+    try:
+        issue_columns = cast(Any, Issue).__table__.c
+        result = session.exec(
+            update(Issue)
+            .where(
+                issue_columns.id == issue_id,
+                issue_columns.repo_id == repo_id,
+                issue_columns.tenant_id == tenant_id,
+                issue_columns.title_change_sync_id == sync_id,
+                issue_columns.previous_title.is_not(None),
+            )
+            .values(title=issue_columns.previous_title, previous_title=None)
+            .execution_options(synchronize_session=False)
+        )
+        if result.rowcount != 1:
+            session.rollback()
+            session.refresh(issue)
+            if issue.title_change_sync_id != sync_id:
+                raise HTTPException(status_code=409, detail="undo handle is stale")
+            if issue.previous_title is None:
+                return {
+                    "status": "already_undone",
+                    "issue_id": str(issue.id),
+                    "issue_number": issue.number,
+                }
+            raise HTTPException(status_code=409, detail="undo state changed; retry")
+
+        AuditService().append(
+            session,
+            tenant_id=tenant_id,
+            actor_id=f"github:{current.github_id}",
+            action="issue.title.undo",
+            resource=f"repos/{repo_id}/issues/{issue.id}/title",
+            request_payload={"issue_id": str(issue.id), "sync_id": str(sync_id)},
+        )
+        session.commit()
+    except Exception:
+        session.rollback()
+        raise
+    return {
+        "status": "undone",
+        "issue_id": str(issue.id),
+        "issue_number": issue.number,
     }
 
 
