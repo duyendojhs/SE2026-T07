@@ -1,112 +1,131 @@
-"""Stale pull request and stale issue detection rules."""
-
 from __future__ import annotations
 
-from abc import abstractmethod
-from collections.abc import Sequence
-from datetime import datetime, timedelta
-from typing import ClassVar
+from datetime import UTC, datetime, timedelta
+from typing import Any, Mapping, Sequence
 
-from app.services.rules.base import BaseRule, RuleFinding, Severity
-from app.services.rules.models import (
-    IssueMeta,
-    ItemState,
-    PullRequestMeta,
-    RepositorySnapshot,
-)
-
-SECONDS_PER_HOUR = 3600
-ESCALATION_FACTOR = 2
+from app.services.rules.base import BaseRule, RuleFinding
 
 
-def _format_duration(delta: timedelta) -> str:
-    total_hours = int(delta.total_seconds() // SECONDS_PER_HOUR)
-    days, hours = divmod(total_hours, 24)
-    return f"{days} day(s) {hours} hour(s)"
+def _as_list(items: Sequence[Mapping[str, Any]] | Mapping[str, Any] | None) -> list[Mapping[str, Any]]:
+    if items is None:
+        return []
+    if isinstance(items, Mapping):
+        return [items]
+    return list(items)
 
 
-class _StaleItemRule(BaseRule):
-    """Shared logic: flag open items inactive for strictly longer than a threshold.
+def _parse_datetime(value: Any) -> datetime | None:
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        parsed = value
+        if parsed.tzinfo is None:
+            return parsed.replace(tzinfo=UTC)
+        return parsed.astimezone(UTC)
+    if isinstance(value, str):
+        raw = value.strip()
+        if not raw:
+            return None
+        if raw.endswith("Z"):
+            raw = raw[:-1] + "+00:00"
+        try:
+            parsed = datetime.fromisoformat(raw)
+        except ValueError:
+            return None
+        if parsed.tzinfo is None:
+            return parsed.replace(tzinfo=UTC)
+        return parsed.astimezone(UTC)
+    return None
 
-    Severity is rule-based and deterministic: ``HIGH`` when the longest
-    inactivity is at least twice the threshold, otherwise ``MEDIUM``.
-    """
 
-    item_label: ClassVar[str]
-    default_threshold: ClassVar[timedelta]
+class StalePRRule(BaseRule):
+    """Flag open pull requests older than 3 days."""
 
-    def __init__(self, threshold: timedelta | None = None) -> None:
-        super().__init__()
-        self.threshold = threshold if threshold is not None else self.default_threshold
-        if self.threshold <= timedelta(0):
-            raise ValueError("threshold must be positive")
+    rule_id = "stale-pr"
+    severity = "warning"
+    title = "Open pull request is stale"
 
-    @abstractmethod
-    def _open_items(self, snapshot: RepositorySnapshot) -> Sequence[tuple[int, datetime]]:
-        """Return ``(number, last_activity_at)`` for every open item."""
+    def evaluate(
+        self,
+        items: Sequence[Mapping[str, Any]] | Mapping[str, Any] | None,
+    ) -> list[RuleFinding]:
+        findings: list[RuleFinding] = []
+        now = datetime.now(UTC)
+        threshold = timedelta(days=3)
 
-    def _evaluate(self, snapshot: RepositorySnapshot, now: datetime) -> list[RuleFinding]:
-        open_items = self._open_items(snapshot)
-        stale = sorted(
-            (
-                (number, now - last_activity)
-                for number, last_activity in open_items
-                if now - last_activity > self.threshold
-            ),
-            key=lambda pair: pair[0],
-        )
-        if not stale:
-            return []
+        for item in _as_list(items):
+            if str(item.get("state", "")).lower() != "open":
+                continue
 
-        longest = max(inactive for _, inactive in stale)
-        threshold_hours = self.threshold.total_seconds() / SECONDS_PER_HOUR
-        severity = (
-            Severity.HIGH if longest >= self.threshold * ESCALATION_FACTOR else Severity.MEDIUM
-        )
-        reason = (
-            f"{len(stale)} of {len(open_items)} open {self.item_label}(s) have had no "
-            f"recorded activity for more than {_format_duration(self.threshold)} "
-            f"(threshold: {threshold_hours:g} hours); the longest inactivity is "
-            f"{_format_duration(longest)}."
-        )
-        return [
-            RuleFinding(
-                rule_id=self.rule_id,
-                severity=severity,
-                title=self.title,
-                trigger_reason=reason,
-                impacted_items=tuple(f"{self.item_label} #{number}" for number, _ in stale),
-                metrics={
-                    "open_count": len(open_items),
-                    "stale_count": len(stale),
-                    "threshold_hours": round(threshold_hours, 2),
-                    "max_inactive_hours": round(longest.total_seconds() / SECONDS_PER_HOUR, 2),
-                },
+            updated_at = _parse_datetime(item.get("updated_at"))
+            if updated_at is None:
+                continue
+
+            age = now - updated_at
+            if age <= threshold:
+                continue
+
+            number = item.get("number") or item.get("id") or "unknown"
+            trigger_reason = (
+                f"Pull request #{number} is open and has had no activity for "
+                f"{age.total_seconds() / 86400:.1f} days."
             )
-        ]
+            findings.append(
+                RuleFinding(
+                    rule_id=self.rule_id,
+                    severity=self.severity,
+                    title=self.title,
+                    trigger_reason=trigger_reason,
+                    impacted_items=[f"pr#{number}"],
+                )
+            )
+
+        return findings
 
 
-class StalePRRule(_StaleItemRule):
-    """Flag open pull requests with no activity for more than 3 days."""
+class StaleIssueRule(BaseRule):
+    """Flag open issues older than 3 days."""
 
-    rule_id: ClassVar[str] = "stale_pr"
-    title: ClassVar[str] = "Stale pull requests"
-    item_label: ClassVar[str] = "PR"
-    default_threshold: ClassVar[timedelta] = timedelta(days=3)
+    rule_id = "stale-issue"
+    severity = "warning"
+    title = "Open issue is stale"
 
-    def _open_items(self, snapshot: RepositorySnapshot) -> Sequence[tuple[int, datetime]]:
-        prs: tuple[PullRequestMeta, ...] = snapshot.pull_requests
-        return [(pr.number, pr.last_activity_at) for pr in prs if pr.state is ItemState.OPEN]
+    def evaluate(
+        self,
+        items: Sequence[Mapping[str, Any]] | Mapping[str, Any] | None,
+    ) -> list[RuleFinding]:
+        findings: list[RuleFinding] = []
+        now = datetime.now(UTC)
+        threshold = timedelta(days=3)
+
+        for item in _as_list(items):
+            if str(item.get("state", "")).lower() != "open":
+                continue
+
+            updated_at = _parse_datetime(item.get("updated_at"))
+            if updated_at is None:
+                continue
+
+            age = now - updated_at
+            if age <= threshold:
+                continue
+
+            number = item.get("number") or item.get("id") or "unknown"
+            trigger_reason = (
+                f"Issue #{number} is open and has had no activity for "
+                f"{age.total_seconds() / 86400:.1f} days."
+            )
+            findings.append(
+                RuleFinding(
+                    rule_id=self.rule_id,
+                    severity=self.severity,
+                    title=self.title,
+                    trigger_reason=trigger_reason,
+                    impacted_items=[f"issue#{number}"],
+                )
+            )
+
+        return findings
 
 
-class StaleIssueRule(_StaleItemRule):
-    """Flag open issues with no activity for more than 7 days (configurable)."""
-
-    rule_id: ClassVar[str] = "stale_issue"
-    title: ClassVar[str] = "Stale issues"
-    item_label: ClassVar[str] = "Issue"
-    default_threshold: ClassVar[timedelta] = timedelta(days=7)
-
-    def _open_items(self, snapshot: RepositorySnapshot) -> Sequence[tuple[int, datetime]]:
-        issues: tuple[IssueMeta, ...] = snapshot.issues
-        return [(i.number, i.last_activity_at) for i in issues if i.state is ItemState.OPEN]
+__all__ = ["StalePRRule", "StaleIssueRule"]
