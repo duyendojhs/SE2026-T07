@@ -123,6 +123,8 @@ class Issue(SQLModel, table=True):
     github_id: int
     number: int
     title: str = Field(max_length=500)
+    previous_title: str | None = Field(default=None, max_length=500)
+    title_change_sync_id: uuid.UUID | None = Field(default=None)
     state: str = Field(max_length=20)
     author_login: str | None = Field(default=None, max_length=200)
     assignee_logins: list[str] = Field(

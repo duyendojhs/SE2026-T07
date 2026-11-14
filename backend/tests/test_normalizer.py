@@ -1,5 +1,7 @@
 import uuid
 
+import pytest
+
 from app.ingestion.normalizer import (
     normalize_comment,
     normalize_commit,
@@ -36,6 +38,55 @@ def test_issue_normalisation_keeps_metadata_only() -> None:
     assert "body" not in data
 
 
+@pytest.mark.parametrize(
+    ("title", "is_valid"),
+    [
+        (None, False),
+        ("", False),
+        ("   ", False),
+        ("x", True),
+        ("xy", True),
+        ("a" * 499, True),
+        ("b" * 500, True),
+        ("c" * 501, False),
+    ],
+)
+def test_issue_title_boundary_validation(title: str | None, is_valid: bool) -> None:
+    data = normalize_issue(
+        {
+            "id": 1001,
+            "number": 7,
+            "title": title,
+            "state": "open",
+            "created_at": "2026-10-01T00:00:00Z",
+            "updated_at": "2026-10-02T00:00:00Z",
+        },
+        tenant_id=uuid.uuid4(),
+        repo_id=uuid.uuid4(),
+    )
+
+    if is_valid:
+        assert data["title"] == title
+    else:
+        assert "title" not in data
+
+
+def test_issue_title_missing_is_not_normalized_to_empty() -> None:
+    data = normalize_issue(
+        {
+            "id": 1001,
+            "number": 7,
+            "state": "open",
+            "created_at": "2026-10-01T00:00:00Z",
+            "updated_at": "2026-10-02T00:00:00Z",
+        },
+        tenant_id=uuid.uuid4(),
+        repo_id=uuid.uuid4(),
+    )
+
+    assert "title" not in data
+
+
 def test_pull_request_normalisation_detects_merged_state() -> None:
     data = normalize_pull_request(
         {
@@ -60,6 +111,26 @@ def test_pull_request_normalisation_detects_merged_state() -> None:
     assert data["state"] == "merged"
     assert data["base_branch"] == "main"
     assert data["merge_commit_sha"] == "b" * 40
+
+
+def test_pull_request_title_truncation_remains_unchanged() -> None:
+    title = "p" * 501
+
+    data = normalize_pull_request(
+        {
+            "id": 11,
+            "number": 12,
+            "title": title,
+            "state": "open",
+            "user": {"login": "alice"},
+            "created_at": "2026-10-01T00:00:00Z",
+            "updated_at": "2026-10-03T00:00:00Z",
+        },
+        tenant_id=uuid.uuid4(),
+        repo_id=uuid.uuid4(),
+    )
+
+    assert data["title"] == title[:500]
 
 
 def test_review_and_comment_normalisation() -> None:

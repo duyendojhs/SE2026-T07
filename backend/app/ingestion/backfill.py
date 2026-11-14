@@ -39,6 +39,7 @@ class BackfillResult:
     status: str
     counts: dict[str, int] = field(default_factory=dict)
     errors: list[str] = field(default_factory=list)
+    issue_title_undo_handles: list[dict[str, str | int]] = field(default_factory=list)
 
 
 class BackfillService:
@@ -66,6 +67,8 @@ class BackfillService:
             "commits": 0,
         }
         self.errors: list[str] = []
+        self.sync_id = uuid.uuid4()
+        self.issue_title_undo_handles: list[dict[str, str | int]] = []
 
     def run(self, *, days: int | None = None) -> BackfillResult:
         since = utcnow() - timedelta(days=days or settings.backfill_days)
@@ -111,7 +114,12 @@ class BackfillService:
             self.repo.sync_error = None
         self.session.add(self.repo)
         self.session.commit()
-        return BackfillResult(status=self.repo.sync_status, counts=self.counts, errors=self.errors)
+        return BackfillResult(
+            status=self.repo.sync_status,
+            counts=self.counts,
+            errors=self.errors,
+            issue_title_undo_handles=self.issue_title_undo_handles,
+        )
 
     def _ingest_issues(self, since: datetime) -> set[int]:
         numbers: set[int] = set()
@@ -129,10 +137,16 @@ class BackfillService:
                 if item.get("pull_request"):
                     continue
                 data = normalize_issue(item, tenant_id=self.tenant_id, repo_id=self.repo.id)
-                self._upsert_issue(data)
+                if "title" not in data:
+                    self.errors.append(f"issue {data['number']}: invalid title")
+                issue = self._upsert_issue(data)
+                self._store_raw_event(
+                    "backfill.issue", {key: value for key, value in item.items() if key != "title"}
+                )
+                if issue is None:
+                    continue
                 numbers.add(data["number"])
                 self.counts["issues"] += 1
-                self._store_raw_event("backfill.issue", item)
             self._audit("issues", len(page))
         self._touch_cursor("issues")
         return numbers
@@ -207,14 +221,43 @@ class BackfillService:
             self._audit("commits", len(page))
         self._touch_cursor("commits")
 
-    def _upsert_issue(self, data: dict[str, Any]) -> Issue:
-        return _upsert(
-            self.session,
-            Issue,
-            Issue.repo_id == self.repo.id,
-            Issue.github_id == data["github_id"],
-            data=data,
-        )
+    def _upsert_issue(self, data: dict[str, Any]) -> Issue | None:
+        existing = self.session.exec(
+            select(Issue)
+            .where(
+                Issue.tenant_id == self.tenant_id,
+                Issue.repo_id == self.repo.id,
+                Issue.github_id == data["github_id"],
+            )
+            .with_for_update()
+        ).first()
+        if existing is None:
+            if "title" not in data:
+                return None
+            existing = Issue(**data)
+            self.session.add(existing)
+            self.session.flush()
+            return existing
+
+        for key, value in data.items():
+            if key != "title":
+                setattr(existing, key, value)
+        if "title" in data:
+            title = data["title"]
+            if title != existing.title:
+                existing.previous_title = existing.title
+                existing.title = title
+                existing.title_change_sync_id = self.sync_id
+                self.issue_title_undo_handles.append(
+                    {
+                        "issue_id": str(existing.id),
+                        "issue_number": existing.number,
+                        "sync_id": str(self.sync_id),
+                    }
+                )
+        self.session.add(existing)
+        self.session.flush()
+        return existing
 
     def _upsert_pull_request(self, data: dict[str, Any]) -> PullRequest:
         return _upsert(
