@@ -9,7 +9,7 @@ Implementation Guide: `D:\SE\docs\04-implementation\SE2026_T07-Implementation-Gu
 
 ## Test evidence
 
-The commands ran offline with `DATABASE_URL=sqlite://` and the projectâ€™s declared development dependencies. SQLite was used for the backend test fixtures; no service outside the process was called.
+The commands ran offline with `DATABASE_URL=sqlite://` and the project’s declared development dependencies. SQLite was used for the backend test fixtures; no service outside the process was called.
 
 | Stage | Command | Result |
 |---|---|---|
@@ -21,7 +21,7 @@ The commands ran offline with `DATABASE_URL=sqlite://` and the projectâ€™s 
 | Mypy | `rtk proxy "C:\Users\ANHTRU~1\AppData\Local\Temp\se2026-t07-vt025-venv\Scripts\python.exe" -m mypy app` | `Success: no issues found in 27 source files` |
 | Diff whitespace | `rtk proxy git diff --check` | exit 0 |
 
-The single test warning is Starletteâ€™s deprecation warning for using `httpx` with `starlette.testclient`; it did not fail the suite. The baseline used the original 41 tests. The final suite includes the new normalizer, backfill, and API tests.
+The single test warning is Starlette’s deprecation warning for using `httpx` with `starlette.testclient`; it did not fail the suite. The baseline used the original 41 tests. The final suite includes the new normalizer, backfill, and API tests.
 
 Line/branch coverage was not measured: neither `coverage` nor `pytest-cov` is installed in the existing environment. No dependency was added for this assignment.
 
@@ -37,7 +37,7 @@ Expected mutation result: **1 failed** because the viewer received HTTP `200` wh
 
 ## Migration and PostgreSQL availability
 
-The migration was exercised on SQLite using `upgrade head â†’ downgrade to 3ffc12e866fb â†’ upgrade head`; both nullable undo columns appeared after each upgrade and disappeared after downgrade. Result: `SQLite migration upgrade -> downgrade -> upgrade passed`.
+The migration was exercised on SQLite using `upgrade head → downgrade to 3ffc12e866fb → upgrade head`; both nullable undo columns appeared after each upgrade and disappeared after downgrade. Result: `SQLite migration upgrade -> downgrade -> upgrade passed`.
 
 PostgreSQL race/migration verification was unavailable locally: `localhost:5432` was unavailable, and `docker version --format '{{.Server.Version}}'` could not connect to the Docker engine named pipe. SQLite verified the conditional update and sequential stale/retry behavior in tests, but does not prove PostgreSQL transaction races.
 
