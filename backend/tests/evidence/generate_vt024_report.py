@@ -50,6 +50,7 @@ styles.add(ParagraphStyle(name="BodyVN", fontName="Segoe", fontSize=8.6, leading
 styles.add(ParagraphStyle(name="SmallVN", fontName="Segoe", fontSize=7.5, leading=9.3, textColor=INK, spaceAfter=1 * mm))
 styles.add(ParagraphStyle(name="TinyVN", fontName="Segoe", fontSize=6.8, leading=8.1, textColor=INK))
 styles.add(ParagraphStyle(name="CellVN", fontName="Segoe", fontSize=7.0, leading=8.3, textColor=INK))
+styles.add(ParagraphStyle(name="CaseCellVN", fontName="Segoe", fontSize=6.1, leading=7.3, textColor=INK))
 styles.add(ParagraphStyle(name="CellHeadVN", fontName="Segoe-Bold", fontSize=7.0, leading=8.3, textColor=colors.white))
 styles.add(ParagraphStyle(name="QuoteVN", fontName="Segoe-Bold", fontSize=10.3, leading=14, textColor=NAVY, alignment=TA_CENTER))
 styles.add(ParagraphStyle(name="AppendixVN", fontName="Segoe-Bold", fontSize=12, leading=15, textColor=NAVY, spaceAfter=3 * mm))
@@ -135,7 +136,7 @@ def main_pages() -> list:
     ]
     story += [table(ac_rows, [34 * mm, 140 * mm])]
     story += section("Bất biến kỹ thuật", "Số lần gọi ≤ max_retries + 1; max_retries=0 nghĩa là đúng một lần thử. Kết quả thành công chỉ trả sau phản hồi thành công. Khi cạn lượt, transport exception hoặc GitHubAPIError phù hợp được truyền ra. Endpoint allowlist và auth header tiếp tục được áp dụng.")
-    story += section("Ràng buộc phi chức năng", "Chỉ retry GET cho lỗi transport được chọn (ConnectError, TimeoutException); không thêm dependency runtime; giữ chính sách jitter/backoff sẵn có; không mở rộng thay đổi sang BackfillService; không retry unsafe methods khi chưa có hợp đồng idempotency rõ ràng.")
+    story += section("Yêu cầu phi chức năng và ràng buộc", "Mục tiêu kiểm thử hiệu năng: 100 concurrent users/tasks và p95 latency ≤ 3.0 giây. Kiểm thử tự động phải offline và deterministic. Privacy policy chỉ lưu metadata, không lưu nội dung issue/comment nhạy cảm. Retry phải bounded và không tạo side effects trùng ngoài ý muốn. Bản vá retry GET cho ConnectError/TimeoutException, không thêm dependency runtime, giữ backoff hiện hữu, không retry unsafe methods và không mở rộng sang BackfillService. Benchmark mock ở trang 7 không chứng minh production đạt p95 ≤ 3.0 giây.")
     story += section("Định nghĩa failure rõ ràng", "Lỗi kết nối/timeout sau lượt cuối không bị đổi thành success hoặc che giấu. HTTP 401/404 giữ nguyên xử lý không retry. 403/429/5xx cho GET giữ xử lý hiện hành; với non-GET, giới hạn retry không được làm thay đổi kiểu exception hiện hữu.")
     story += [PageBreak()]
 
@@ -144,30 +145,30 @@ def main_pages() -> list:
     story += section("Kế hoạch triển khai ban đầu", "1) Kiểm tra hợp đồng GitHubClient, allowlist, backoff và trạng thái backfill. 2) Viết test trước cho timeout, ConnectError, retry bound, unsafe POST và persistence failure. 3) Quan sát RED và giữ log nguyên gốc. 4) Chỉ sửa request loop trong backend/app/github/client.py. 5) Chạy GREEN, hồi quy, lint rồi đánh giá mutation, coverage và harness mock. 6) Ghi AI Usage Log và traceability trước khi đóng gói báo cáo.")
     story += section("Quyết định review 1 — không retry toàn workflow", "Không bọc BackfillService.run() bằng retry. Kiểm tra models.py xác nhận uniqueness/upsert cho business rows, nhưng RawEvent và AuditLog được append trong cùng unit of work và không có khóa idempotency tương ứng. Chạy lại workflow có thể nhân bản log phụ. Tầng GET là nơi an toàn hơn cho retry trong vertical slice.")
     story += section("Quyết định review 2 — Hypothesis là phần bắt buộc", "Property test không bị bỏ qua sau khi example-based test pass. Oracle ban đầu đòi GitHubAPIError sau transport exhaustion; kiểm tra client hiện hữu cho thấy httpx transport exception được truyền nguyên trạng và không có contract yêu cầu chuyển kiểu. Oracle được sửa sang httpx.TransportError, nhưng vẫn giữ bounded attempts và yêu cầu không trả success khi cạn lượt.")
-    story += section("Quyết định review 3 — giữ bằng chứng RED", "Log RED và test-only commit được giữ nguyên. Bốn failure ban đầu gồm timeout, connection error, oracle bound/exhaustion và persistence failure. API regression ban đầu kỳ vọng JSON 500; phản hồi thực tế của Starlette là plain text nên chỉ assertion được điều chỉnh theo response quan sát được, không sửa production để phù hợp giả định.")
+    story += section("Quyết định review 3 — giữ bằng chứng RED", "Log RED gốc và test-only commit được giữ nguyên. Bốn test thất bại chính xác: test_read_timeout_is_retried_then_succeeds, test_connection_error_is_retried_then_succeeds, test_transient_http_error_on_post_is_not_retried, test_timeout_retry_is_bounded_and_returns_only_after_success. Persistence characterization test_commit_failure_never_returns_success_and_recovery_is_consistent đã PASS trên baseline. API regression ban đầu kỳ vọng JSON 500; phản hồi thực tế của Starlette là plain text nên chỉ assertion được chỉnh theo response quan sát được.")
     story += section("Rủi ro thiếu ngữ cảnh đã điều tra", "Sau khi được phép kiểm tra model/audit code, xác nhận business rows có uniqueness nhưng raw events/audit records không có cùng bảo đảm. Rủi ro còn lại: manual full backfill có thể append thêm log; chưa có test count cho side effect này. Nhật ký AI ghi lại giả định, quyết định review, và giới hạn.")
     story += [PageBreak()]
 
     # Page 4
-    story += [p("04  /  CHIẾN LƯỢC KIỂM THỬ THEO RỦI RO", "H1VN"), p("ID case riêng không được định nghĩa trong repository; tên test thật là định danh thực thi. Bảng dưới liệt kê 14 test thuộc lát cắt retry/backfill ở Checkpoint 3.", "SmallVN")]
+    story += [p("04  /  CHIẾN LƯỢC KIỂM THỬ THEO RỦI RO", "H1VN"), p("T01–T14 là documentation IDs của báo cáo, không đổi tên Python test. Cột ID ánh xạ từng ID tới tên test function hiện có.", "SmallVN")]
     tests = [
-        ["Test function", "Mức / input → kỳ vọng", "Ưu tiên"],
-        ["test_rate_limit_retry_after_is_respected", "Unit · 403 + Retry-After → sleep theo header.", "P1"],
-        ["test_rate_limit_exhaustion_raises", "Unit · 403 lặp → GitHubAPIError khi cạn.", "P1"],
-        ["test_bad_token_is_not_retried", "Unit · 401 → một lần gọi, lỗi truyền ra.", "P1"],
-        ["test_content_endpoint_is_blocked_before_network", "Unit · endpoint ngoài allowlist → chặn trước network.", "P1"],
-        ["test_pagination_follows_link_header", "Unit · Link header → theo pagination.", "P2"],
-        ["test_http_500_is_retried_then_succeeds", "Unit · GET 500 rồi 200 → trả thành công.", "P1"],
-        ["test_read_timeout_is_retried_then_succeeds", "Unit · ReadTimeout rồi 200 → retry thành công.", "P1"],
-        ["test_connection_error_is_retried_then_succeeds", "Unit · ConnectError rồi 200 → retry thành công.", "P1"],
-        ["test_transient_http_error_on_post_is_not_retried", "Unit · POST 500 → đúng một request, raise.", "P1"],
-        ["test_timeout_retry_is_bounded_and_returns_only_after_success", "Property · bound 0–5, lỗi transient → ≤ retries+1; exhaustion không success.", "P1"],
-        ["test_backfill_is_idempotent_and_metadata_only", "Integration · chạy lại dữ liệu → business-row count ổn định.", "P1"],
-        ["test_backfill_marks_partial_when_one_resource_fails", "Integration · một nguồn lỗi → partial và dữ liệu còn lại.", "P1"],
-        ["test_generated_duplicate_issue_ids_remain_unique_after_reordered_reingestion", "Property · ID trùng/thứ tự khác → issue rows duy nhất.", "P1"],
-        ["test_commit_failure_never_returns_success_and_recovery_is_consistent", "Integration · commit lỗi → không success; rollback rồi phục hồi.", "P1"],
+        ["ID", "Requirement / Risk", "Test Level", "Precondition / Input", "Expected Result", "Priority"],
+        ["T01<br/><font size='5.4'>test_rate_limit_retry_after_is_respected</font>", "AC-01<br/>Retry-After", "Unit", "GET 403 + Retry-After", "Sleep delay follows header", "P2"],
+        ["T02<br/><font size='5.4'>test_rate_limit_exhaustion_raises</font>", "AC-02<br/>Bound/exhaustion", "Unit", "GET receives repeated 403", "Raise GitHubAPIError at bound", "P1"],
+        ["T03<br/><font size='5.4'>test_bad_token_is_not_retried</font>", "AC-02<br/>Auth", "Unit", "GET returns 401", "One attempt; propagate error", "P1"],
+        ["T04<br/><font size='5.4'>test_content_endpoint_is_blocked_before_network</font>", "Allowlist", "Unit", "Endpoint outside allowlist", "Reject before network", "P1"],
+        ["T05<br/><font size='5.4'>test_pagination_follows_link_header</font>", "Pagination", "Unit", "Response includes Link header", "Follow next page", "P2"],
+        ["T06<br/><font size='5.4'>test_http_500_is_retried_then_succeeds</font>", "AC-01<br/>Server error", "Unit", "GET 500 then 200", "Retry and return success", "P1"],
+        ["T07<br/><font size='5.4'>test_read_timeout_is_retried_then_succeeds</font>", "AC-01<br/>Timeout", "Unit", "GET ReadTimeout then 200", "Retry and return success", "P1"],
+        ["T08<br/><font size='5.4'>test_connection_error_is_retried_then_succeeds</font>", "AC-01<br/>ConnectError", "Unit", "GET ConnectError then 200", "Retry and return success", "P1"],
+        ["T09<br/><font size='5.4'>test_transient_http_error_on_post_is_not_retried</font>", "AC-02<br/>Unsafe method", "Unit", "POST receives 500", "One request; propagate error", "P1"],
+        ["T10<br/><font size='5.4'>test_timeout_retry_is_bounded_and_returns_only_after_success</font>", "AC-02<br/>Retry bound", "Property", "max_retries 0–5; transient sequence", "≤ retries+1; exhaustion raises", "P1"],
+        ["T11<br/><font size='5.4'>test_backfill_is_idempotent_and_metadata_only</font>", "AC-03<br/>Re-ingestion", "Integration", "Repeat same backfill", "Business-row counts stable", "P1"],
+        ["T12<br/><font size='5.4'>test_backfill_marks_partial_when_one_resource_fails</font>", "AC-05<br/>Partial failure", "Integration", "One resource fails; others succeed", "Partial status; keep successful data", "P1"],
+        ["T13<br/><font size='5.4'>test_generated_duplicate_issue_ids_remain_unique_after_reordered_reingestion</font>", "AC-03<br/>Duplicate IDs", "Property", "Duplicate IDs in changed order", "Issue rows remain unique", "P1"],
+        ["T14<br/><font size='5.4'>test_commit_failure_never_returns_success_and_recovery_is_consistent</font>", "AC-04<br/>Persistence", "Integration", "Inject commit failure; then recover", "No false success; rollback/recovery", "P1"],
     ]
-    story += [table(tests, [78 * mm, 80 * mm, 16 * mm])]
+    story += [table(tests, [36 * mm, 26 * mm, 15 * mm, 42 * mm, 42 * mm, 13 * mm], font="CaseCellVN")]
     story += section("Mức kiểm thử và oracle", "MockTransport cho HTTP/unit; SQLite in-memory cho backfill/integration; TestClient cho API persistence regression sau đó; không chạy E2E với GitHub thật. Retry property sinh max_retries 0–5 và chuỗi timeout/connection. Oracle đếm lần gọi, xác nhận ≤ max_retries+1 và yêu cầu exception khi không còn lượt. Invariant idempotency kiểm tra business rows sau ID trùng và reordering.")
     story += [p("Hypothesis thực thi: retry 40 pass, 2 invalid, 0 fail; idempotency 30 pass, 4 invalid, 0 fail. Không có minimized failing counterexample. Nguyên nhân chi tiết của invalid examples không được log.", "SmallVN"), PageBreak()]
 
@@ -176,7 +177,7 @@ def main_pages() -> list:
     phases = [
         ["Mốc", "Commit", "Bằng chứng"],
         ["Baseline", "90f831c8c8afc84dd4f0268b7ed5704e41f32cbf", "Điểm bắt đầu; client chưa retry timeout/connection."],
-        ["RED · test-only", "11055810f10729963a8706b22fec2fcf5d9b0647", "4 failure dự kiến: timeout, ConnectError, oracle/exhaustion, persistence."],
+        ["RED · test-only", "11055810f10729963a8706b22fec2fcf5d9b0647", "4 test fail: ReadTimeout, ConnectError, POST 500 retry, bounded retry. Persistence characterization đã pass baseline."],
         ["PATCH · GREEN", "ecd22676f6a1ce43bcfa0d21852f717d475c130d", "Production chỉ backend/app/github/client.py; oracle dùng TransportError."],
         ["Quality evidence", "e4e56c86b9dab3e3c2fbaf36b751f29e4b135a", "Mutation, coverage, API regression, lint/perf evidence."],
         ["Perf refinement", "5f1fcbb719a8efad847e58bca03dce406566bfae", "Barrier 100 workers; latency tính cả outcome lỗi."],
@@ -223,16 +224,17 @@ def main_pages() -> list:
     # Page 8
     story += [p("08  /  TRACEABILITY, BẰNG CHỨNG VÀ PHẢN TƯ", "H1VN")]
     trace = [
-        ["AC / rủi ro", "Test thực thi", "File · commit", "Kết quả"],
-        ["Timeout / connection / bound", "test_read_timeout_is_retried_then_succeeds; test_connection_error_is_retried_then_succeeds; test_timeout_retry_is_bounded_and_returns_only_after_success", "test_rate_limit.py · 1105581 / ecd2267", "Pass; property 40 pass, 2 invalid"],
-        ["Không retry unsafe; 401", "test_transient_http_error_on_post_is_not_retried; test_bad_token_is_not_retried", "test_rate_limit.py · 1105581", "Pass; một lần gọi"],
-        ["Idempotency business rows", "test_backfill_is_idempotent_and_metadata_only; test_generated_duplicate_issue_ids_remain_unique_after_reordered_reingestion", "test_backfill.py · 7c13113 / 1105581", "Pass; 30 pass, 4 invalid"],
-        ["Partial failure", "test_backfill_marks_partial_when_one_resource_fails", "test_backfill.py · 7c13113", "Pass; partial, dữ liệu thành công còn lại"],
-        ["False success / API persistence", "test_commit_failure_never_returns_success_and_recovery_is_consistent; test_sync_api_does_not_return_success_when_persistence_fails", "test_backfill.py / test_tenants_sync_api.py · 1105581 / e4e56c8", "Pass; mutant killed; API 500"],
-        ["Performance", "main / _run_task", "perf_retry_harness.py · e4e56c8 / 5f1fcbb", "100 task mock; p95 0.701 ms"],
+        ["AC / rủi ro · case IDs", "Test function(s)", "File · commit", "Kết quả"],
+        ["AC-01/02 · T01, T02, T06", "test_rate_limit_retry_after_is_respected; test_rate_limit_exhaustion_raises; test_http_500_is_retried_then_succeeds", "test_rate_limit.py · 1105581", "Pass; GET retry/exhaustion"],
+        ["AC-02 · T03, T04, T05", "test_bad_token_is_not_retried; test_content_endpoint_is_blocked_before_network; test_pagination_follows_link_header", "test_rate_limit.py · 1105581", "Pass; 401, allowlist, pagination"],
+        ["AC-01/02 · T07–T10", "test_read_timeout_is_retried_then_succeeds; test_connection_error_is_retried_then_succeeds; test_transient_http_error_on_post_is_not_retried; test_timeout_retry_is_bounded_and_returns_only_after_success", "test_rate_limit.py · 1105581 / ecd2267", "Pass; property 40 pass, 2 invalid"],
+        ["AC-03/05 · T11–T13", "test_backfill_is_idempotent_and_metadata_only; test_backfill_marks_partial_when_one_resource_fails; test_generated_duplicate_issue_ids_remain_unique_after_reordered_reingestion", "test_backfill.py · 7c13113 / 1105581", "Pass; property 30 pass, 4 invalid"],
+        ["AC-04 · T14", "test_commit_failure_never_returns_success_and_recovery_is_consistent", "test_backfill.py · 1105581", "Pass; mutant killed"],
+        ["API regression · ngoài T01–T14", "test_sync_api_does_not_return_success_when_persistence_fails", "test_tenants_sync_api.py · e4e56c8", "Pass; API 500"],
+        ["Performance experiment", "main / _run_task", "perf_retry_harness.py · e4e56c8 / 5f1fcbb", "100 task mock; p95 0.701 ms"],
     ]
     story += [table(trace, [34 * mm, 79 * mm, 36 * mm, 25 * mm])]
-    story += [p("Case ID riêng chưa được repository gán; function name là định danh thật. Commit đầy đủ, lệnh và kết quả nằm trong traceability/evidence appendix. Hai giả định AI đã sửa: ép transport exhaustion thành GitHubAPIError (oracle sửa về httpx.TransportError theo contract); kỳ vọng response 500 dạng JSON (đổi assertion theo plain text quan sát được). Tóm tắt perf sai 85/10/5 cũng được hiệu chỉnh về 90/5/5 bằng cách đối chiếu phép đếm request.", "SmallVN")]
+    story += [p("T01–T14 là documentation IDs, ánh xạ từng test function tại trang 4; tên Python test không đổi. API persistence regression được thêm sau đó và nằm ngoài bộ 14 case. Commit đầy đủ, commands, mutation experiment và kết quả nằm trong evidence appendix. Hai giả định AI đã sửa: ép transport exhaustion thành GitHubAPIError (oracle sửa về httpx.TransportError); kỳ vọng response 500 JSON (assert plain text thực tế). Tóm tắt perf sai 85/10/5 được sửa thành 90/5/5 theo phép đếm request.", "SmallVN")]
     story += [p("PHẢN TƯ", "H2VN")]
     reflection = (
         "Độ tin cậy tăng lên nhờ ba loại bằng chứng bổ sung nhau: test-first làm lộ lỗi trước khi vá, kiểm tra bounded retry xác nhận giới hạn lời gọi, còn mutation thử xem test có thật sự phát hiện false success khi commit thất bại hay không. Mutant bị test persistence giết bằng lỗi DID NOT RAISE SQLAlchemyError; đây là bằng chứng mạnh hơn việc chỉ thấy test pass trên implementation đúng. Chạy lại toàn backend được 49 pass và Ruff pass, đồng thời đổi thứ tự các file test hai lần vẫn 15/15, giúp giảm lo ngại về state dùng chung.\n\n"
