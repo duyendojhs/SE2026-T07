@@ -26,4 +26,4 @@ AI được dùng để hỗ trợ phân tích yêu cầu, đề xuất test, di
 - Chưa có test riêng cho 404/generic 4xx, POST transport failure, raw event/audit append count hoặc all-resources-failed.
 - Hypothesis invalid-example causes chưa được xác định; coverage không bao phủ toàn repository.
 - Performance test không dùng mạng GitHub hoặc database và loại trừ thời gian backoff thật.
-- Chưa push nhánh hoặc tạo PR; nội dung này là bản nháp chờ Checkpoint 7 approval.
+- PR được tạo ở trạng thái Draft để review; chưa merge.
