@@ -6,7 +6,9 @@ from typing import Any, Mapping, Sequence
 from app.services.rules.base import BaseRule, RuleFinding
 
 
-def _as_list(items: Sequence[Mapping[str, Any]] | Mapping[str, Any] | None) -> list[Mapping[str, Any]]:
+def _as_list(
+    items: Sequence[Mapping[str, Any]] | Mapping[str, Any] | None,
+) -> list[Mapping[str, Any]]:
     if items is None:
         return []
     if isinstance(items, Mapping):
