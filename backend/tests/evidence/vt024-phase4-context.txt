@@ -50,9 +50,11 @@ Coverage
 
 Concurrent mocked performance harness
 - Harness: tests/perf_retry_harness.py; 100 tasks/workers, each owns a GitHubClient, MockTransport, and attempt counter. No network/database and no shared mutable state.
-- Retry configuration: max_retries=2; task outcomes scripted as 85 one-attempt successes, 10 transient-then-success cases, and 5 exhausted 503 cases.
-- Actual observed aggregate: 95 successes, 5 exhausted; 115 attempts total.
-- One observed sample: p50 0.385 ms, p95 0.844 ms, max 1.689 ms using nearest-rank percentiles and `time.perf_counter`. These are local mocked harness timings and are not representative GitHub/service latency.
+- Retry configuration: max_retries=2; 90 immediate-success tasks, 5 transient-then-success tasks, and 5 intentionally exhausted 503 tasks.
+- Actual observed aggregate: 95 successes, 5 exhausted; 115 attempts total (90×1 + 5×2 + 5×3).
+- All 100 worker tasks wait on a `threading.Barrier` before their timed request work. The barrier wait is excluded from per-task latency. Handlers perform no blocking operation; GitHub transport is `httpx.MockTransport`, and the retry sleep callback is a no-op.
+- Latency covers the request and retry code path for every task, including exhaustion. It includes retry/backoff calculation and calls to the no-op sleep callback, but it excludes real backoff waiting. Nearest-rank p50/p95/max in the rerun were 0.376/0.701/1.131 ms.
+- This experiment does not establish production p95, real GitHub network latency, database throughput, or full API concurrency. The 3.0 s requirement is only compared with this isolated mock scenario, not validated for production.
 - Exact output is in vt024-performance.txt.
 
 Warnings and limitations

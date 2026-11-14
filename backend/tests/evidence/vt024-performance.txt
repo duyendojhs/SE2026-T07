@@ -1,14 +1,22 @@
 {
+  "concurrency_gate": "all 100 workers wait at a Barrier before timing starts",
   "harness": "mocked GitHubClient calls; no network or database",
+  "injected_scenarios": {
+    "immediate_success_tasks": 90,
+    "injected_exhaustion_tasks": 5,
+    "transient_then_success_tasks": 5
+  },
   "latency_ms": {
-    "max": 1.689,
+    "max": 1.131,
     "method": "nearest-rank percentile over per-task perf_counter durations",
-    "p50": 0.385,
-    "p95": 0.844
+    "p50": 0.376,
+    "p95": 0.701,
+    "population": "all 100 outcomes, including exhausted tasks"
   },
   "max_retries": 2,
   "results": {
     "attempts_total": 115,
+    "error_rate_percent": 5.0,
     "exhausted": 5,
     "success": 95
   },
