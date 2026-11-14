@@ -44,12 +44,11 @@ def normalize_repository(
 def normalize_issue(
     payload: dict[str, Any], *, tenant_id: uuid.UUID, repo_id: uuid.UUID
 ) -> dict[str, Any]:
-    return {
+    normalized = {
         "tenant_id": tenant_id,
         "repo_id": repo_id,
         "github_id": int(payload["id"]),
         "number": int(payload["number"]),
-        "title": str(payload.get("title") or "")[:500],
         "state": str(payload.get("state") or "open")[:20],
         "author_login": _login(payload.get("user")),
         "assignee_logins": [
@@ -68,6 +67,10 @@ def normalize_issue(
             parse_timestamp(payload["closed_at"]) if payload.get("closed_at") else None
         ),
     }
+    title = payload.get("title")
+    if isinstance(title, str) and title.strip() and len(title) <= 500:
+        normalized["title"] = title
+    return normalized
 
 
 def normalize_pull_request(
