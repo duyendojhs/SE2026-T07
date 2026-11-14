@@ -1,5 +1,7 @@
 import httpx
 import pytest
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 from app.github.allowed_endpoints import EndpointNotAllowed
 from app.github.app_auth import GitHubAPIError
@@ -110,3 +112,139 @@ def test_pagination_follows_link_header() -> None:
 
     assert pages == [[{"id": 1}], [{"id": 2}]]
     client.close()
+
+
+def test_http_500_is_retried_then_succeeds() -> None:
+    calls = 0
+
+    def handler(_: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            return httpx.Response(500, json={"message": "temporary server failure"})
+        return httpx.Response(200, json={"ok": True})
+
+    client = GitHubClient(
+        token_provider=lambda: "token",
+        base_url="https://api.github.com",
+        transport=httpx.MockTransport(handler),
+        sleep=lambda _: None,
+    )
+    try:
+        payload, _ = client.get_json("/repos/duyendojhs/SE2026-T07")
+        assert payload == {"ok": True}
+        assert calls == 2
+    finally:
+        client.close()
+
+
+def test_read_timeout_is_retried_then_succeeds() -> None:
+    calls = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            raise httpx.ReadTimeout("temporary timeout", request=request)
+        return httpx.Response(200, json={"full_name": "duyendojhs/SE2026-T07"})
+
+    client = GitHubClient(
+        token_provider=lambda: "token",
+        base_url="https://api.github.com",
+        transport=httpx.MockTransport(handler),
+        sleep=lambda _: None,
+    )
+    try:
+        payload, _ = client.get_json("/repos/duyendojhs/SE2026-T07")
+        assert payload["full_name"] == "duyendojhs/SE2026-T07"
+        assert calls == 2
+    finally:
+        client.close()
+
+
+def test_connection_error_is_retried_then_succeeds() -> None:
+    calls = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            raise httpx.ConnectError("temporary connection error", request=request)
+        return httpx.Response(200, json={"full_name": "duyendojhs/SE2026-T07"})
+
+    client = GitHubClient(
+        token_provider=lambda: "token",
+        base_url="https://api.github.com",
+        transport=httpx.MockTransport(handler),
+        sleep=lambda _: None,
+    )
+    try:
+        payload, _ = client.get_json("/repos/duyendojhs/SE2026-T07")
+        assert payload["full_name"] == "duyendojhs/SE2026-T07"
+        assert calls == 2
+    finally:
+        client.close()
+
+
+def test_transient_http_error_on_post_is_not_retried() -> None:
+    calls = 0
+
+    def handler(_: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        return httpx.Response(500, json={"message": "temporary server failure"})
+
+    client = GitHubClient(
+        token_provider=lambda: "token",
+        base_url="https://api.github.com",
+        transport=httpx.MockTransport(handler),
+        sleep=lambda _: None,
+    )
+    try:
+        with pytest.raises(GitHubAPIError):
+            client.request("POST", "/repos/duyendojhs/SE2026-T07")
+        assert calls == 1
+    finally:
+        client.close()
+
+
+@given(
+    max_retries=st.integers(min_value=0, max_value=5),
+    transient_failures=st.lists(
+        st.sampled_from(["timeout", "connect"]), max_size=8
+    ),
+)
+@settings(max_examples=40, derandomize=True, database=None)
+def test_timeout_retry_is_bounded_and_returns_only_after_success(
+    max_retries: int, transient_failures: list[str]
+) -> None:
+    calls = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        if calls <= len(transient_failures):
+            failure = transient_failures[calls - 1]
+            if failure == "timeout":
+                raise httpx.ReadTimeout("temporary timeout", request=request)
+            raise httpx.ConnectError("temporary connection error", request=request)
+        return httpx.Response(200, json={"ok": True})
+
+    client = GitHubClient(
+        token_provider=lambda: "token",
+        base_url="https://api.github.com",
+        transport=httpx.MockTransport(handler),
+        sleep=lambda _: None,
+        max_retries=max_retries,
+    )
+    try:
+        if len(transient_failures) <= max_retries:
+            payload, _ = client.get_json("/repos/duyendojhs/SE2026-T07")
+            assert payload == {"ok": True}
+            assert calls == len(transient_failures) + 1
+        else:
+            with pytest.raises(httpx.TransportError):
+                client.get_json("/repos/duyendojhs/SE2026-T07")
+            assert calls == max_retries + 1
+    finally:
+        client.close()

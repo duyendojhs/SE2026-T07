@@ -1,0 +1,34 @@
+VT-024 GREEN verification context
+
+Branch: bt3-23001819-vt024-retry
+Baseline SHA: 90f831c8c8afc84dd4f0268b7ed5704e41f32cbf
+HEAD before the production commit: 11055810f10729963a8706b22fec2fcf5d9b0647 (test-only RED commit)
+Original test-only commit: 11055810f10729963a8706b22fec2fcf5d9b0647
+The production patch, oracle correction, and evidence were uncommitted while GREEN commands ran.
+Temporary trace_invalid_tmp.py: absent and not tracked.
+
+Environment versions:
+Python 3.13.5
+pytest 8.4.2
+Hypothesis 6.170.15
+httpx 0.28.1
+SQLModel 0.0.48
+FastAPI 0.162.0
+Ruff 0.17.3
+mypy: unavailable in .venv (`python -m mypy app` returned `No module named mypy`)
+
+Observed results:
+- Targeted retry/backfill suite: 14 passed.
+- Full backend suite: 48 passed.
+- Ruff: passed on final modified source/test files. An earlier Ruff invocation found import sorting and a test import-name collision; those test-file issues were fixed, then Ruff passed.
+- Hypothesis retry property: 40 passing generated examples, 2 invalid, 0 failing/minimized counterexamples.
+- Hypothesis backfill idempotency property: 30 passing generated examples, 4 invalid, 0 failing/minimized counterexamples.
+- Pytest emitted a Starlette deprecation warning about using httpx with TestClient; tests passed.
+- No GitHub API calls were made.
+
+Residual risks reviewed:
+- `httpx.PoolTimeout` is covered by `httpx.TimeoutException`; retrying it can add bounded delay when local connection-pool capacity, rather than GitHub, is the bottleneck.
+- `httpx.WriteTimeout` is also covered. The retry is restricted to GET, so a partially transmitted request cannot repeat a business write; GET may still consume extra read capacity.
+- HTTP 403 handling for GET is intentionally preserved, including `Retry-After` and bounded fallback backoff. A permission-related 403 may be permanent, so retries can add bounded delay without resolving it. Non-GET 403 responses fail immediately with `GitHubAPIError`.
+
+Exact commands and terminal outputs are in vt024-green.txt.

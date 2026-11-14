@@ -1,0 +1,31 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+____ test_commit_failure_never_returns_success_and_recovery_is_consistent _____
+
+session = <sqlmodel.orm.session.Session object at 0x000001E43AACD550>
+
+    def test_commit_failure_never_returns_success_and_recovery_is_consistent(
+        session: Session,
+    ) -> None:
+        tenant, repo = _seed(session)
+
+        def fail_commit(_: Session) -> None:
+            raise SQLAlchemyError("injected commit failure")
+
+        sqlalchemy_event.listen(session, "before_commit", fail_commit)
+        try:
+>           with pytest.raises(SQLAlchemyError, match="injected commit failure"):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE <class 'sqlalchemy.exc.SQLAlchemyError'>
+
+tests\test_backfill.py:285: Failed
+============================== warnings summary ===============================
+.venv\Lib\site-packages\fastapi\testclient.py:1
+  C:\HUS\SE\Prj_AI03\SE2026-T07\backend\.venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_backfill.py::test_commit_failure_never_returns_success_and_recovery_is_consistent
+
+Exit code: 1

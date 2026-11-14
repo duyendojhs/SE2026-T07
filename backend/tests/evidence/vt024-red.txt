@@ -1,0 +1,276 @@
+......FFFF....                                                           [100%]
+================================== FAILURES ===================================
+_________________ test_read_timeout_is_retried_then_succeeds __________________
+
+    def test_read_timeout_is_retried_then_succeeds() -> None:
+        calls = 0
+    
+        def handler(request: httpx.Request) -> httpx.Response:
+            nonlocal calls
+            calls += 1
+            if calls == 1:
+                raise httpx.ReadTimeout("temporary timeout", request=request)
+            return httpx.Response(200, json={"full_name": "duyendojhs/SE2026-T07"})
+    
+        client = GitHubClient(
+            token_provider=lambda: "token",
+            base_url="https://api.github.com",
+            transport=httpx.MockTransport(handler),
+            sleep=lambda _: None,
+        )
+        try:
+>           payload, _ = client.get_json("/repos/duyendojhs/SE2026-T07")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_rate_limit.py:157: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+app\github\client.py:150: in get_json
+    response = self.request("GET", path, params=params, etag=etag)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app\github\client.py:94: in request
+    response = self.client.request(
+.venv\Lib\site-packages\httpx\_client.py:825: in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_client.py:914: in send
+    response = self._send_handling_auth(
+.venv\Lib\site-packages\httpx\_client.py:942: in _send_handling_auth
+    response = self._send_handling_redirects(
+.venv\Lib\site-packages\httpx\_client.py:979: in _send_handling_redirects
+    response = self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_client.py:1014: in _send_single_request
+    response = transport.handle_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_transports\mock.py:24: in handle_request
+    response = self.handler(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+request = <Request('GET', 'https://api.github.com/repos/duyendojhs/SE2026-T07')>
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+>           raise httpx.ReadTimeout("temporary timeout", request=request)
+E           httpx.ReadTimeout: temporary timeout
+
+tests\test_rate_limit.py:147: ReadTimeout
+_______________ test_connection_error_is_retried_then_succeeds ________________
+
+    def test_connection_error_is_retried_then_succeeds() -> None:
+        calls = 0
+    
+        def handler(request: httpx.Request) -> httpx.Response:
+            nonlocal calls
+            calls += 1
+            if calls == 1:
+                raise httpx.ConnectError("temporary connection error", request=request)
+            return httpx.Response(200, json={"full_name": "duyendojhs/SE2026-T07"})
+    
+        client = GitHubClient(
+            token_provider=lambda: "token",
+            base_url="https://api.github.com",
+            transport=httpx.MockTransport(handler),
+            sleep=lambda _: None,
+        )
+        try:
+>           payload, _ = client.get_json("/repos/duyendojhs/SE2026-T07")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_rate_limit.py:181: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+app\github\client.py:150: in get_json
+    response = self.request("GET", path, params=params, etag=etag)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app\github\client.py:94: in request
+    response = self.client.request(
+.venv\Lib\site-packages\httpx\_client.py:825: in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_client.py:914: in send
+    response = self._send_handling_auth(
+.venv\Lib\site-packages\httpx\_client.py:942: in _send_handling_auth
+    response = self._send_handling_redirects(
+.venv\Lib\site-packages\httpx\_client.py:979: in _send_handling_redirects
+    response = self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_client.py:1014: in _send_single_request
+    response = transport.handle_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_transports\mock.py:24: in handle_request
+    response = self.handler(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+request = <Request('GET', 'https://api.github.com/repos/duyendojhs/SE2026-T07')>
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+>           raise httpx.ConnectError("temporary connection error", request=request)
+E           httpx.ConnectError: temporary connection error
+
+tests\test_rate_limit.py:171: ConnectError
+______________ test_transient_http_error_on_post_is_not_retried _______________
+
+    def test_transient_http_error_on_post_is_not_retried() -> None:
+        calls = 0
+    
+        def handler(_: httpx.Request) -> httpx.Response:
+            nonlocal calls
+            calls += 1
+            return httpx.Response(500, json={"message": "temporary server failure"})
+    
+        client = GitHubClient(
+            token_provider=lambda: "token",
+            base_url="https://api.github.com",
+            transport=httpx.MockTransport(handler),
+            sleep=lambda _: None,
+        )
+        try:
+            with pytest.raises(GitHubAPIError):
+                client.request("POST", "/repos/duyendojhs/SE2026-T07")
+>           assert calls == 1
+E           assert 4 == 1
+
+tests\test_rate_limit.py:205: AssertionError
+________ test_timeout_retry_is_bounded_and_returns_only_after_success _________
+  + Exception Group Traceback (most recent call last):
+  |   File "C:\HUS\SE\Prj_AI03\SE2026-T07\backend\tests\test_rate_limit.py", line 211, in test_timeout_retry_is_bounded_and_returns_only_after_success
+  |     max_retries=st.integers(min_value=0, max_value=5),
+  |                ^^^
+  |   File "C:\HUS\SE\Prj_AI03\SE2026-T07\backend\.venv\Lib\site-packages\hypothesis\core.py", line 2334, in wrapped_test
+  |     raise the_error_hypothesis_found
+  | ExceptionGroup: Hypothesis found 2 distinct failures. (2 sub-exceptions)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "C:\HUS\SE\Prj_AI03\SE2026-T07\backend\tests\test_rate_limit.py", line 246, in test_timeout_retry_is_bounded_and_returns_only_after_success
+    |     client.get_json("/repos/duyendojhs/SE2026-T07")
+    |     ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\HUS\SE\Prj_AI03\SE2026-T07\backend\app\github\client.py", line 150, in get_json
+    |     response = self.request("GET", path, params=params, etag=etag)
+    |   File "C:\HUS\SE\Prj_AI03\SE2026-T07\backend\app\github\client.py", line 94, in request
+    |     response = self.client.request(
+    |         method,
+    |     ...<2 lines>...
+    |         headers=headers,
+    |     )
+    |   File "C:\HUS\SE\Prj_AI03\SE2026-T07\backend\.venv\Lib\site-packages\httpx\_client.py", line 825, in request
+    |     return self.send(request, auth=auth, follow_redirects=follow_redirects)
+    |            ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\HUS\SE\Prj_AI03\SE2026-T07\backend\.venv\Lib\site-packages\httpx\_client.py", line 914, in send
+    |     response = self._send_handling_auth(
+    |         request,
+    |     ...<2 lines>...
+    |         history=[],
+    |     )
+    |   File "C:\HUS\SE\Prj_AI03\SE2026-T07\backend\.venv\Lib\site-packages\httpx\_client.py", line 942, in _send_handling_auth
+    |     response = self._send_handling_redirects(
+    |         request,
+    |         follow_redirects=follow_redirects,
+    |         history=history,
+    |     )
+    |   File "C:\HUS\SE\Prj_AI03\SE2026-T07\backend\.venv\Lib\site-packages\httpx\_client.py", line 979, in _send_handling_redirects
+    |     response = self._send_single_request(request)
+    |   File "C:\HUS\SE\Prj_AI03\SE2026-T07\backend\.venv\Lib\site-packages\httpx\_client.py", line 1014, in _send_single_request
+    |     response = transport.handle_request(request)
+    |   File "C:\HUS\SE\Prj_AI03\SE2026-T07\backend\.venv\Lib\site-packages\httpx\_transports\mock.py", line 24, in handle_request
+    |     response = self.handler(request)
+    |   File "C:\HUS\SE\Prj_AI03\SE2026-T07\backend\tests\test_rate_limit.py", line 229, in handler
+    |     raise httpx.ConnectError("temporary connection error", request=request)
+    | httpx.ConnectError: temporary connection error
+    | Failing test case: test_timeout_retry_is_bounded_and_returns_only_after_success(
+    |     max_retries=0,  # or any other generated value
+    |     transient_failures=['connect'],
+    | )
+    | Explanation:
+    |     These lines were always and only run by failing test cases:
+    |         C:\HUS\SE\Prj_AI03\SE2026-T07\backend\tests\test_rate_limit.py:226
+    +---------------- 2 ----------------
+    | Traceback (most recent call last):
+    |   File "C:\HUS\SE\Prj_AI03\SE2026-T07\backend\tests\test_rate_limit.py", line 246, in test_timeout_retry_is_bounded_and_returns_only_after_success
+    |     client.get_json("/repos/duyendojhs/SE2026-T07")
+    |     ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\HUS\SE\Prj_AI03\SE2026-T07\backend\app\github\client.py", line 150, in get_json
+    |     response = self.request("GET", path, params=params, etag=etag)
+    |   File "C:\HUS\SE\Prj_AI03\SE2026-T07\backend\app\github\client.py", line 94, in request
+    |     response = self.client.request(
+    |         method,
+    |     ...<2 lines>...
+    |         headers=headers,
+    |     )
+    |   File "C:\HUS\SE\Prj_AI03\SE2026-T07\backend\.venv\Lib\site-packages\httpx\_client.py", line 825, in request
+    |     return self.send(request, auth=auth, follow_redirects=follow_redirects)
+    |            ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\HUS\SE\Prj_AI03\SE2026-T07\backend\.venv\Lib\site-packages\httpx\_client.py", line 914, in send
+    |     response = self._send_handling_auth(
+    |         request,
+    |     ...<2 lines>...
+    |         history=[],
+    |     )
+    |   File "C:\HUS\SE\Prj_AI03\SE2026-T07\backend\.venv\Lib\site-packages\httpx\_client.py", line 942, in _send_handling_auth
+    |     response = self._send_handling_redirects(
+    |         request,
+    |         follow_redirects=follow_redirects,
+    |         history=history,
+    |     )
+    |   File "C:\HUS\SE\Prj_AI03\SE2026-T07\backend\.venv\Lib\site-packages\httpx\_client.py", line 979, in _send_handling_redirects
+    |     response = self._send_single_request(request)
+    |   File "C:\HUS\SE\Prj_AI03\SE2026-T07\backend\.venv\Lib\site-packages\httpx\_client.py", line 1014, in _send_single_request
+    |     response = transport.handle_request(request)
+    |   File "C:\HUS\SE\Prj_AI03\SE2026-T07\backend\.venv\Lib\site-packages\httpx\_transports\mock.py", line 24, in handle_request
+    |     response = self.handler(request)
+    |   File "C:\HUS\SE\Prj_AI03\SE2026-T07\backend\tests\test_rate_limit.py", line 228, in handler
+    |     raise httpx.ReadTimeout("temporary timeout", request=request)
+    | httpx.ReadTimeout: temporary timeout
+    | Failing test case: test_timeout_retry_is_bounded_and_returns_only_after_success(
+    |     max_retries=0,  # or any other generated value
+    |     transient_failures=['timeout'],
+    | )
+    | Explanation:
+    |     These lines were always and only run by failing test cases:
+    |         C:\HUS\SE\Prj_AI03\SE2026-T07\backend\tests\test_rate_limit.py:226
+    +------------------------------------
+============================== warnings summary ===============================
+.venv\Lib\site-packages\fastapi\testclient.py:1
+  C:\HUS\SE\Prj_AI03\SE2026-T07\backend\.venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============================ Hypothesis Statistics ============================
+tests/test_rate_limit.py::test_timeout_retry_is_bounded_and_returns_only_after_success:
+
+  - during generate phase (0.15 seconds):
+    - Typical runtimes: ~ 0-81 ms, of which ~ 0-5 ms in data generation
+    - 3 passing, 8 failing, and 3 invalid test cases
+    - Found 2 distinct errors in this phase
+
+  - during shrink phase (0.03 seconds):
+    - Typical runtimes: ~ 2-5 ms, of which < 1ms in data generation
+    - 1 passing, 4 failing, and 0 invalid test cases
+    - Tried 5 shrinks of which 4 were successful
+
+  - during explain phase (0.05 seconds):
+    - Typical runtimes: ~ 2ms, of which < 1ms in data generation
+    - 0 passing, 8 failing, and 0 invalid test cases
+
+  - Stopped because nothing left to do
+
+
+tests/test_backfill.py::test_generated_duplicate_issue_ids_remain_unique_after_reordered_reingestion:
+
+  - during generate phase (3.68 seconds):
+    - Typical runtimes: ~ 0-147 ms, of which ~ 0-1 ms in data generation
+    - 30 passing, 0 failing, and 4 invalid test cases
+
+  - Stopped because settings.max_examples=30
+
+
+=========================== short test summary info ===========================
+FAILED tests/test_rate_limit.py::test_read_timeout_is_retried_then_succeeds
+FAILED tests/test_rate_limit.py::test_connection_error_is_retried_then_succeeds
+FAILED tests/test_rate_limit.py::test_transient_http_error_on_post_is_not_retried
+FAILED tests/test_rate_limit.py::test_timeout_retry_is_bounded_and_returns_only_after_success

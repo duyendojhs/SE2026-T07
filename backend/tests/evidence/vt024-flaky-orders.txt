@@ -1,0 +1,21 @@
+VT-024 order-repeat checks
+
+COMMAND: .\.venv\Scripts\python.exe -m pytest -q tests/test_rate_limit.py tests/test_backfill.py tests/test_tenants_sync_api.py
+...............                                                          [100%]
+============================== warnings summary ===============================
+.venv\Lib\site-packages\fastapi\testclient.py:1
+  C:\HUS\SE\Prj_AI03\SE2026-T07\backend\.venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+Exit code: 0
+
+COMMAND: .\.venv\Scripts\python.exe -m pytest -q tests/test_backfill.py tests/test_tenants_sync_api.py tests/test_rate_limit.py
+...............                                                          [100%]
+============================== warnings summary ===============================
+.venv\Lib\site-packages\fastapi\testclient.py:1
+  C:\HUS\SE\Prj_AI03\SE2026-T07\backend\.venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+Exit code: 0

@@ -88,15 +88,23 @@ class GitHubClient:
             headers["If-None-Match"] = etag
 
         last_error: Exception | None = None
+        safe_to_retry = method.upper() == "GET"
         for attempt in range(self.max_retries + 1):
             self._wait_for_reset()
             headers["Authorization"] = f"Bearer {self.token_provider()}"
-            response = self.client.request(
-                method,
-                path,
-                params=params,
-                headers=headers,
-            )
+            try:
+                response = self.client.request(
+                    method,
+                    path,
+                    params=params,
+                    headers=headers,
+                )
+            except (httpx.ConnectError, httpx.TimeoutException) as exc:
+                if not safe_to_retry or attempt >= self.max_retries:
+                    raise
+                self.sleep(min(2**attempt, 60) + random.uniform(0, 1))
+                last_error = exc
+                continue
             self._apply_rate_headers(response)
 
             if response.status_code == 304:
@@ -107,7 +115,7 @@ class GitHubClient:
                     f"GitHub request failed with status {response.status_code}",
                 )
             if response.status_code in (403, 429):
-                if attempt >= self.max_retries:
+                if not safe_to_retry or attempt >= self.max_retries:
                     raise GitHubAPIError(
                         response.status_code,
                         "GitHub rate limit retries exhausted",
@@ -123,7 +131,7 @@ class GitHubClient:
                 last_error = GitHubAPIError(response.status_code, "rate limited")
                 continue
             if response.status_code >= 500:
-                if attempt >= self.max_retries:
+                if not safe_to_retry or attempt >= self.max_retries:
                     raise GitHubAPIError(
                         response.status_code,
                         "GitHub server error retries exhausted",
