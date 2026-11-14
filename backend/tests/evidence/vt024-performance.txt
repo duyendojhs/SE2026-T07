@@ -1,0 +1,20 @@
+{
+  "harness": "mocked GitHubClient calls; no network or database",
+  "latency_ms": {
+    "max": 1.689,
+    "method": "nearest-rank percentile over per-task perf_counter durations",
+    "p50": 0.385,
+    "p95": 0.844
+  },
+  "max_retries": 2,
+  "results": {
+    "attempts_total": 115,
+    "exhausted": 5,
+    "success": 95
+  },
+  "state_isolation": "each worker owns its client, MockTransport, and attempt counter",
+  "tasks": 100,
+  "workers": 100
+}
+
+Exit code: 0

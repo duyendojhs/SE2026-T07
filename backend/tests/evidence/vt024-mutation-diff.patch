@@ -1,0 +1,16 @@
+diff --git a/backend/app/ingestion/backfill.py b/backend/app/ingestion/backfill.py
+index 877db3c..b33bf52 100644
+--- a/backend/app/ingestion/backfill.py
++++ b/backend/app/ingestion/backfill.py
+@@ -110,7 +110,10 @@ class BackfillService:
+             self.repo.sync_status = "ready"
+             self.repo.sync_error = None
+         self.session.add(self.repo)
+-        self.session.commit()
++        try:
++            self.session.commit()
++        except Exception:  # deliberate VT-024 mutation
++            return BackfillResult(status="ready", counts=self.counts, errors=[])
+         return BackfillResult(status=self.repo.sync_status, counts=self.counts, errors=self.errors)
+
+     def _ingest_issues(self, since: datetime) -> set[int]:

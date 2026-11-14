@@ -1,0 +1,61 @@
+VT-024 Phase 4 evidence context
+
+Repository / revision
+- Branch: bt3-23001819-vt024-retry
+- GREEN implementation commit: ecd22676f6a1ce43bcfa0d21852f717d475c130d
+- Preserved RED test-only commit: 11055810f10729963a8706b22fec2fcf5d9b0647
+- Phase 4 evidence was collected against the GREEN commit plus the uncommitted Phase 4 test/harness/dependency/evidence changes.
+- No GitHub API or database was used by the performance harness.
+- The original RED evidence files remain untouched.
+
+Environment
+- Python 3.13.5
+- pytest 8.4.2
+- Hypothesis 6.170.15
+- httpx 0.28.1
+- SQLModel 0.0.48
+- FastAPI 0.162.0
+- Ruff 0.17.3
+- coverage.py 7.17.3 (installed after user approval; added to the optional dev dependency set)
+- mypy is unavailable (`python -m mypy app` reports `No module named mypy`).
+
+Test quality and regression checks
+- API-level sync persistence test: 1 passed. It authenticated as tenant owner, used a local fake GitHub client and an injected SQLAlchemy commit failure, observed HTTP 500, and verified the repository stayed pending.
+- Retry/backfill/API tests in two different file orders: 15 passed in each run; output and commands are in vt024-flaky-orders.txt.
+- Full backend suite after final Phase 4 changes: 49 passed; output is in vt024-full-suite.txt.
+- Ruff on production retry client and relevant tests/harness: passed; output is in vt024-ruff.txt.
+- mypy was attempted and unavailable in this environment; no type check result is claimed.
+- Persistence-failure regression is included in the full suite and killed the deliberate false-success mutant.
+
+Property-based checks
+- Retry property: 40 passing examples, 2 invalid, 0 failing or minimized counterexamples.
+- Backfill idempotency property: 30 passing examples, 4 invalid, 0 failing or minimized counterexamples.
+- Both are deterministic (`derandomize=True`, `database=None`) and passed when rerun together.
+- Neither property uses `assume()` or `.filter()`. A no-op probe with the same bounded strategies also reported invalid generated examples, so these were generated-data invalids rather than application-level rejected inputs. Hypothesis output did not expose byte-level causes for individual invalid examples; the exact individual examples therefore cannot be identified from the available statistics.
+- Retry assertions still enforce calls <= max_retries + 1, success only after a response, and propagation of transport exceptions on exhaustion. The oracle accepts the existing `httpx.TransportError` family rather than imposing GitHubAPIError conversion.
+
+Mutation experiment
+- A temporary local branch was created from the GREEN commit. The experiment changed only the BackfillService persistence block to catch a commit exception and return a fabricated `ready` result.
+- Command: `python -m pytest -q tests/test_backfill.py::test_commit_failure_never_returns_success_and_recovery_is_consistent`
+- Actual result: failed as intended with `Failed: DID NOT RAISE <class 'sqlalchemy.exc.SQLAlchemyError'>`; this demonstrates that the regression test detects the false-success defect.
+- Exact experiment output and unified mutant diff are in vt024-mutation.txt and vt024-mutation-diff.patch.
+- The mutated source was restored before continuing on the assignment branch. No mutant was committed; the temporary local branch reference is removed after final verification.
+
+Coverage
+- Command: `python -m coverage run --branch --source=app.github.client,app.ingestion.backfill -m pytest -q tests/test_rate_limit.py tests/test_backfill.py tests/test_tenants_sync_api.py`
+- Result: 15 passed.
+- Command: `python -m coverage report -m`
+- Results: client.py 74% statements; backfill.py 92%; combined 83% across these two selected production modules (90 branches, 20 partial). Coverage output is preserved in vt024-coverage-run.txt and vt024-coverage-report.txt.
+- This is scoped line and branch coverage for the selected vertical slice, not whole-repository coverage.
+
+Concurrent mocked performance harness
+- Harness: tests/perf_retry_harness.py; 100 tasks/workers, each owns a GitHubClient, MockTransport, and attempt counter. No network/database and no shared mutable state.
+- Retry configuration: max_retries=2; task outcomes scripted as 85 one-attempt successes, 10 transient-then-success cases, and 5 exhausted 503 cases.
+- Actual observed aggregate: 95 successes, 5 exhausted; 115 attempts total.
+- One observed sample: p50 0.385 ms, p95 0.844 ms, max 1.689 ms using nearest-rank percentiles and `time.perf_counter`. These are local mocked harness timings and are not representative GitHub/service latency.
+- Exact output is in vt024-performance.txt.
+
+Warnings and limitations
+- Pytest reports the existing Starlette deprecation warning that its TestClient currently uses httpx; it does not fail the suite.
+- Coverage reflects only `app.github.client` and `app.ingestion.backfill` under the selected retry/backfill/API tests.
+- PoolTimeout is a TimeoutException and is retried for GET, adding bounded delay if local pool capacity is the cause. WriteTimeout is also covered; retry is still GET-only. Existing GET 403 handling remains intact, so a permanent permission 403 can incur bounded delay before failing. Unsafe methods do not retry transport or 403/429/5xx failures.
