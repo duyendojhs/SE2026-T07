@@ -1,0 +1,156 @@
+COMMAND: .\.venv\Scripts\python.exe -m pytest -q --hypothesis-show-statistics tests/test_rate_limit.py tests/test_backfill.py
+..............                                                           [100%]
+============================== warnings summary ===============================
+.venv\Lib\site-packages\fastapi\testclient.py:1
+  C:\HUS\SE\Prj_AI03\SE2026-T07\backend\.venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============================ Hypothesis Statistics ============================
+tests/test_rate_limit.py::test_timeout_retry_is_bounded_and_returns_only_after_success:
+
+  - during generate phase (0.16 seconds):
+    - Typical runtimes: ~ 0-2 ms, of which < 1ms in data generation
+    - 40 passing, 0 failing, and 2 invalid test cases
+
+  - Stopped because settings.max_examples=40
+
+
+tests/test_backfill.py::test_generated_duplicate_issue_ids_remain_unique_after_reordered_reingestion:
+
+  - during generate phase (2.41 seconds):
+    - Typical runtimes: ~ 0-96 ms, of which < 1ms in data generation
+    - 30 passing, 0 failing, and 4 invalid test cases
+
+  - Stopped because settings.max_examples=30
+
+
+EXIT CODE: 0
+
+COMMAND: .\.venv\Scripts\python.exe -m pytest -q
+................................................                         [100%]
+============================== warnings summary ===============================
+.venv\Lib\site-packages\fastapi\testclient.py:1
+  C:\HUS\SE\Prj_AI03\SE2026-T07\backend\.venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+EXIT CODE: 0
+
+COMMAND: .\.venv\Scripts\ruff.exe check app/github/client.py tests/test_rate_limit.py tests/test_backfill.py
+I001 [*] Import block is un-sorted or un-formatted
+  --> tests\test_backfill.py:1:1
+   |
+ 1 | / from collections.abc import Iterator
+ 2 | | from typing import Any
+ 3 | |
+ 4 | | import pytest
+ 5 | | from hypothesis import given, settings, strategies as st
+ 6 | | from sqlalchemy import event
+ 7 | | from sqlalchemy.exc import SQLAlchemyError
+ 8 | | from sqlalchemy.pool import StaticPool
+ 9 | | from sqlmodel import Session, SQLModel, create_engine, select
+10 | |
+11 | | from app.ingestion.backfill import BackfillService
+12 | | from app.models import (
+13 | |     Comment,
+14 | |     Commit,
+15 | |     Installation,
+16 | |     Issue,
+17 | |     PullRequest,
+18 | |     RawEvent,
+19 | |     Repository,
+20 | |     Review,
+21 | |     Tenant,
+22 | | )
+   | |_^
+help: Organize imports
+  |
+4 | import pytest
+  - from hypothesis import given, settings, strategies as st
+5 + from hypothesis import given, settings
+6 + from hypothesis import strategies as st
+7 | from sqlalchemy import event
+  |
+
+F402 Import `event` from line 6 shadowed by loop variable
+   --> tests\test_backfill.py:158:9
+    |
+156 |     raw_events = session.exec(select(RawEvent)).all()
+157 |     assert raw_events
+158 |     for event in raw_events:
+    |         ^^^^^
+159 |         assert "body" not in event.payload_json
+160 |         assert "patch" not in event.payload_json
+    |
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> tests\test_rate_limit.py:1:1
+  |
+1 | / import httpx
+2 | | import pytest
+3 | | from hypothesis import given, settings, strategies as st
+4 | |
+5 | | from app.github.allowed_endpoints import EndpointNotAllowed
+6 | | from app.github.app_auth import GitHubAPIError
+7 | | from app.github.client import GitHubClient
+  | |__________________________________________^
+help: Organize imports
+  |
+2 | import pytest
+  - from hypothesis import given, settings, strategies as st
+3 + from hypothesis import given, settings
+4 + from hypothesis import strategies as st
+5 |
+  |
+
+Found 3 errors.
+[*] 2 fixable with `--fix`.
+EXIT CODE: 1
+
+COMMAND (after Ruff import fix): .\.venv\Scripts\python.exe -m pytest -q --hypothesis-show-statistics tests/test_rate_limit.py tests/test_backfill.py
+..............                                                           [100%]
+============================== warnings summary ===============================
+.venv\Lib\site-packages\fastapi\testclient.py:1
+  C:\HUS\SE\Prj_AI03\SE2026-T07\backend\.venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============================ Hypothesis Statistics ============================
+tests/test_rate_limit.py::test_timeout_retry_is_bounded_and_returns_only_after_success:
+
+  - during generate phase (0.18 seconds):
+    - Typical runtimes: ~ 0-3 ms, of which < 1ms in data generation
+    - 40 passing, 0 failing, and 2 invalid test cases
+
+  - Stopped because settings.max_examples=40
+
+
+tests/test_backfill.py::test_generated_duplicate_issue_ids_remain_unique_after_reordered_reingestion:
+
+  - during generate phase (2.51 seconds):
+    - Typical runtimes: ~ 0-100 ms, of which ~ 0-1 ms in data generation
+    - 30 passing, 0 failing, and 4 invalid test cases
+
+  - Stopped because settings.max_examples=30
+
+
+EXIT CODE: 0
+
+COMMAND (after Ruff import fix): .\.venv\Scripts\python.exe -m pytest -q
+................................................                         [100%]
+============================== warnings summary ===============================
+.venv\Lib\site-packages\fastapi\testclient.py:1
+  C:\HUS\SE\Prj_AI03\SE2026-T07\backend\.venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+EXIT CODE: 0
+
+COMMAND (after import fix): .\.venv\Scripts\ruff.exe check app/github/client.py tests/test_rate_limit.py tests/test_backfill.py
+All checks passed!
+EXIT CODE: 0
+
+COMMAND: .\.venv\Scripts\python.exe -m mypy app
+C:\HUS\SE\Prj_AI03\SE2026-T07\backend\.venv\Scripts\python.exe: No module named mypy
+EXIT CODE: 1

@@ -2,8 +2,9 @@ from collections.abc import Iterator
 from typing import Any
 
 import pytest
-from hypothesis import given, settings, strategies as st
-from sqlalchemy import event
+from hypothesis import given, settings
+from hypothesis import strategies as st
+from sqlalchemy import event as sqlalchemy_event
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.pool import StaticPool
 from sqlmodel import Session, SQLModel, create_engine, select
@@ -279,7 +280,7 @@ def test_commit_failure_never_returns_success_and_recovery_is_consistent(
     def fail_commit(_: Session) -> None:
         raise SQLAlchemyError("injected commit failure")
 
-    event.listen(session, "before_commit", fail_commit)
+    sqlalchemy_event.listen(session, "before_commit", fail_commit)
     try:
         with pytest.raises(SQLAlchemyError, match="injected commit failure"):
             BackfillService(
@@ -289,7 +290,7 @@ def test_commit_failure_never_returns_success_and_recovery_is_consistent(
                 repo=repo,
             ).run()
     finally:
-        event.remove(session, "before_commit", fail_commit)
+        sqlalchemy_event.remove(session, "before_commit", fail_commit)
         session.rollback()
 
     assert session.exec(select(Issue)).all() == []

@@ -1,6 +1,7 @@
 import httpx
 import pytest
-from hypothesis import given, settings, strategies as st
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 from app.github.allowed_endpoints import EndpointNotAllowed
 from app.github.app_auth import GitHubAPIError
@@ -242,7 +243,7 @@ def test_timeout_retry_is_bounded_and_returns_only_after_success(
             assert payload == {"ok": True}
             assert calls == len(transient_failures) + 1
         else:
-            with pytest.raises(GitHubAPIError):
+            with pytest.raises(httpx.TransportError):
                 client.get_json("/repos/duyendojhs/SE2026-T07")
             assert calls == max_retries + 1
     finally:
