@@ -16,6 +16,10 @@ def _as_list(
     return list(items)
 
 
+def _activity_timestamp(item: Mapping[str, Any]) -> Any:
+    return item.get("last_activity_at", item.get("updated_at"))
+
+
 def _parse_datetime(value: Any) -> datetime | None:
     if value is None:
         return None
@@ -59,7 +63,7 @@ class StalePRRule(BaseRule):
             if str(item.get("state", "")).lower() != "open":
                 continue
 
-            updated_at = _parse_datetime(item.get("updated_at"))
+            updated_at = _parse_datetime(_activity_timestamp(item))
             if updated_at is None:
                 continue
 
@@ -104,7 +108,7 @@ class StaleIssueRule(BaseRule):
             if str(item.get("state", "")).lower() != "open":
                 continue
 
-            updated_at = _parse_datetime(item.get("updated_at"))
+            updated_at = _parse_datetime(_activity_timestamp(item))
             if updated_at is None:
                 continue
 
