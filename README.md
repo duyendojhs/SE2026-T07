@@ -52,6 +52,24 @@ available. In development without credentials, `/health`, `/ready`, schema,
 unit tests and fixture backfill still run; live App installation and sync return
 `503` instead of falling back to a PAT.
 
+### Issue title undo tests and local harness
+
+From PowerShell, run the focused offline tests, the full backend suite, and the
+40-task synthetic harness from `backend/`:
+
+```powershell
+cd backend
+$env:DATABASE_URL = "sqlite://"
+python -m pytest tests/test_normalizer.py tests/test_backfill.py tests/test_issue_title_undo.py
+python -m pytest
+python scripts/benchmark_issue_title_undo.py --users 40 --warmups 1 --output ../docs/evidence/vt025-issue-title-load-run-1.json
+python scripts/benchmark_issue_title_undo.py --users 40 --warmups 1 --output ../docs/evidence/vt025-issue-title-load-run-2.json
+```
+
+The harness uses synthetic SQLite data and an in-process ASGI transport. Its
+latencies do not represent PostgreSQL or production network performance; see
+[`docs/evidence/vt025-issue-title-undo-report.md`](docs/evidence/vt025-issue-title-undo-report.md).
+
 ### Frontend local
 
 ```bash
@@ -77,10 +95,14 @@ GET  /api/v1/auth/github/install/callback
 GET  /api/v1/me
 GET  /api/v1/tenants/{slug}/repos
 POST /api/v1/tenants/{slug}/repos/{repo_id}/sync
+POST /api/v1/tenants/{slug}/repos/{repo_id}/issues/{issue_id}/title/undo?sync_id={uuid}
 GET  /api/v1/tenants/{slug}/audit
 GET  /api/v1/tenants/{slug}/audit/verify
 POST /api/v1/webhooks/github
 ```
+
+Issue title undo restores only the local copy. GitHub remains the source of
+truth, so a later sync can apply the GitHub title again.
 
 ## Privacy Boundary
 

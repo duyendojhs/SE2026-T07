@@ -1,0 +1,79 @@
+{
+  "all_titles_restored": true,
+  "dataset": {
+    "distinct_tenants_repositories_issues_and_sync_ids": true,
+    "measured_issues_and_handles": 40,
+    "synthetic_tenants": 41
+  },
+  "environment": {
+    "database": "SQLite file, synthetic, local process",
+    "network": "in-process ASGI; no external calls",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python": "3.13.14"
+  },
+  "measurement": {
+    "batch_duration_seconds": 2.081,
+    "concurrent_tasks": 40,
+    "errors": 0,
+    "http_statuses": {
+      "200": 40
+    },
+    "p50_ms": 420.065,
+    "p95_ms": 1855.557,
+    "p99_ms": 2061.9,
+    "samples": 40,
+    "timeout_per_request_seconds": 10.0,
+    "timeouts": 0
+  },
+  "request_mix": "POST one undo per distinct existing Issue handle",
+  "restored_issues": 40,
+  "sample_latencies_ms": [
+    1109.914,
+    1855.557,
+    1524.574,
+    223.985,
+    360.317,
+    1745.642,
+    157.589,
+    252.888,
+    1309.467,
+    170.52,
+    439.998,
+    113.641,
+    420.065,
+    1415.857,
+    1631.462,
+    1198.87,
+    127.297,
+    526.631,
+    141.525,
+    981.383,
+    106.911,
+    877.511,
+    293.818,
+    308.401,
+    1949.027,
+    177.061,
+    749.322,
+    988.072,
+    2061.9,
+    222.474,
+    313.628,
+    758.672,
+    358.274,
+    90.614,
+    644.562,
+    269.497,
+    854.447,
+    535.704,
+    253.724,
+    183.775
+  ],
+  "undo_statuses": {
+    "undone": 40
+  },
+  "warmup": {
+    "http_status": 200,
+    "requests": 1
+  }
+}
