@@ -11,11 +11,11 @@ from app.services.rules.stale import StaleIssueRule, StalePRRule
 
 __all__ = [
     "BaseRule",
-    "RuleFinding",
     "IssueMeta",
     "ItemState",
     "PullRequestMeta",
     "RepositorySnapshot",
-    "StalePRRule",
+    "RuleFinding",
     "StaleIssueRule",
+    "StalePRRule",
 ]
