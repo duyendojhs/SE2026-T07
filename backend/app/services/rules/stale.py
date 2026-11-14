@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime, timedelta
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 from app.services.rules.base import BaseRule, RuleFinding
 
@@ -134,4 +135,4 @@ class StaleIssueRule(BaseRule):
         return findings
 
 
-__all__ = ["StalePRRule", "StaleIssueRule"]
+__all__ = ["StaleIssueRule", "StalePRRule"]
