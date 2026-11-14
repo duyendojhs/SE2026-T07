@@ -14,6 +14,7 @@ from reportlab.lib.units import mm
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import (
+    KeepTogether,
     PageBreak,
     Paragraph,
     Preformatted,
@@ -44,8 +45,8 @@ pdfmetrics.registerFontFamily(
 styles = getSampleStyleSheet()
 styles.add(ParagraphStyle(name="TitleVN", fontName="Segoe-Bold", fontSize=21, leading=25, textColor=NAVY, spaceAfter=5 * mm))
 styles.add(ParagraphStyle(name="SubTitleVN", fontName="Segoe", fontSize=10, leading=14, textColor=MUTED, spaceAfter=4 * mm))
-styles.add(ParagraphStyle(name="H1VN", fontName="Segoe-Bold", fontSize=15, leading=18, textColor=NAVY, spaceAfter=3 * mm))
-styles.add(ParagraphStyle(name="H2VN", fontName="Segoe-Bold", fontSize=9.5, leading=12, textColor=TEAL, spaceBefore=2 * mm, spaceAfter=1.3 * mm))
+styles.add(ParagraphStyle(name="H1VN", fontName="Segoe-Bold", fontSize=15, leading=18, textColor=NAVY, spaceAfter=3 * mm, keepWithNext=True))
+styles.add(ParagraphStyle(name="H2VN", fontName="Segoe-Bold", fontSize=9.5, leading=12, textColor=TEAL, spaceBefore=2 * mm, spaceAfter=1.3 * mm, keepWithNext=True))
 styles.add(ParagraphStyle(name="BodyVN", fontName="Segoe", fontSize=8.6, leading=11.5, textColor=INK, spaceAfter=2 * mm))
 styles.add(ParagraphStyle(name="SmallVN", fontName="Segoe", fontSize=7.5, leading=9.3, textColor=INK, spaceAfter=1 * mm))
 styles.add(ParagraphStyle(name="TinyVN", fontName="Segoe", fontSize=6.8, leading=8.1, textColor=INK))
@@ -62,10 +63,10 @@ def p(text: str, style: str = "BodyVN") -> Paragraph:
 
 
 def section(title: str, body: str) -> list:
-    return [p(title, "H2VN"), p(body)]
+    return [KeepTogether([p(title, "H2VN"), p(body)])]
 
 
-def table(rows: list[list[str]], widths: list[float], header: bool = True, font: str = "CellVN") -> Table:
+def table(rows: list[list[str]], widths: list[float], header: bool = True, font: str = "CellVN") -> KeepTogether:
     converted = []
     for ridx, row in enumerate(rows):
         converted.append([p(cell, "CellHeadVN" if header and ridx == 0 else font) for cell in row])
@@ -81,7 +82,7 @@ def table(rows: list[list[str]], widths: list[float], header: bool = True, font:
     if header:
         cmds += [("BACKGROUND", (0, 0), (-1, 0), NAVY), ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, PALE])]
     t.setStyle(TableStyle(cmds))
-    return t
+    return KeepTogether([t])
 
 
 def page_header(canvas, doc) -> None:
@@ -93,8 +94,7 @@ def page_header(canvas, doc) -> None:
     canvas.setFont("Segoe", 7)
     canvas.setFillColor(MUTED)
     canvas.drawString(18 * mm, 9 * mm, "AI-03  |  VT-024  |  Hoàng Khánh An")
-    label = f"Nội dung chính  |  {page}/8" if page <= 8 else f"Phụ lục  |  {page}"
-    canvas.drawRightString(192 * mm, 9 * mm, label)
+    canvas.drawRightString(192 * mm, 9 * mm, f"Trang {page}")
     if page > 1:
         canvas.setFont("Segoe-Bold", 7)
         canvas.setFillColor(TEAL)
@@ -113,7 +113,7 @@ def main_pages() -> list:
         ["Họ tên / MSSV", "Hoàng Khánh An / 23001819"],
         ["Team / mã đề tài", "SE2026-T07 / AI-03"],
         ["Repository", "<link href='https://github.com/duyendojhs/SE2026-15-1' color='#0B7776'>duyendojhs/SE2026-15-1</link> (đề bài); repo dự án: <link href='https://github.com/duyendojhs/SE2026-T07' color='#0B7776'>SE2026-T07</link>"],
-        ["Nhánh / PR", "bt3-23001819-vt024-retry · PR chưa tạo (đang chờ Checkpoint 7)"],
+        ["Nhánh / PR", "bt3-23001819-vt024-retry · PR #15 (draft)"],
         ["Baseline", "90f831c8c8afc84dd4f0268b7ed5704e41f32cbf"],
     ]
     story += [table(identity, [34 * mm, 140 * mm]), Spacer(1, 3 * mm)]
@@ -122,7 +122,7 @@ def main_pages() -> list:
     story += [declaration]
     story += section("Bối cảnh và yêu cầu cá nhân hóa", "GitHub Project Coach đồng bộ issue, pull request, review và metadata vào backend. VT-024 yêu cầu GitHubClient chịu được lỗi tạm thời trong các lần đọc an toàn, trong khi giới hạn số lần thử và giữ nguyên lỗi khi cạn lượt. Điểm thay đổi được chọn là tầng HTTP client; yêu cầu không bao gồm retry toàn bộ backfill.")
     story += section("Vấn đề và rủi ro chính", "Nếu GET bị timeout hoặc mất kết nối nhất thời, yêu cầu đọc có thể thất bại dù lần gọi tiếp theo thành công. Ngược lại, retry POST/PUT/PATCH/DELETE có thể lặp side effect. Backfill còn ghi RawEvent và AuditLog theo kiểu append; uniqueness của business rows không chứng minh các bản ghi phụ có exactly-once semantics. Vì vậy phạm vi retry phải hẹp, có giới hạn và không biến lỗi persistence thành kết quả thành công.")
-    story += [p("Kết quả cuối: thay đổi production giới hạn ở GitHubClient; kiểm thử cuối 49 passed; branch chưa được đẩy lên remote.", "SmallVN"), PageBreak()]
+    story += [p("Kết quả cuối: thay đổi production giới hạn ở GitHubClient; kiểm thử cuối 49 passed; branch đã được đẩy lên remote.", "SmallVN")]
 
     # Page 2
     story += [p("02  /  ĐẶC TẢ VÀ BẤT BIẾN", "H1VN")]
@@ -138,19 +138,15 @@ def main_pages() -> list:
     story += section("Bất biến kỹ thuật", "Số lần gọi ≤ max_retries + 1; max_retries=0 nghĩa là đúng một lần thử. Kết quả thành công chỉ trả sau phản hồi thành công. Khi cạn lượt, transport exception hoặc GitHubAPIError phù hợp được truyền ra. Endpoint allowlist và auth header tiếp tục được áp dụng.")
     story += section("Yêu cầu phi chức năng và ràng buộc", "Mục tiêu kiểm thử hiệu năng: 100 concurrent users/tasks và p95 latency ≤ 3.0 giây. Kiểm thử tự động phải offline và deterministic. Privacy policy chỉ lưu metadata, không lưu nội dung issue/comment nhạy cảm. Retry phải bounded và không tạo side effects trùng ngoài ý muốn. Bản vá retry GET cho ConnectError/TimeoutException, không thêm dependency runtime, giữ backoff hiện hữu, không retry unsafe methods và không mở rộng sang BackfillService. Benchmark mock ở trang 7 không chứng minh production đạt p95 ≤ 3.0 giây.")
     story += section("Định nghĩa failure rõ ràng", "Lỗi kết nối/timeout sau lượt cuối không bị đổi thành success hoặc che giấu. HTTP 401/404 giữ nguyên xử lý không retry. 403/429/5xx cho GET giữ xử lý hiện hành; với non-GET, giới hạn retry không được làm thay đổi kiểu exception hiện hữu.")
-    story += [PageBreak()]
 
     # Page 3
-    story += [p("03  /  KẾ HOẠCH AI VÀ REVIEW CỦA CON NGƯỜI", "H1VN")]
-    story += section("Kế hoạch triển khai ban đầu", "1) Kiểm tra hợp đồng GitHubClient, allowlist, backoff và trạng thái backfill. 2) Viết test trước cho timeout, ConnectError, retry bound, unsafe POST và persistence failure. 3) Quan sát RED và giữ log nguyên gốc. 4) Chỉ sửa request loop trong backend/app/github/client.py. 5) Chạy GREEN, hồi quy, lint rồi đánh giá mutation, coverage và harness mock. 6) Ghi AI Usage Log và traceability trước khi đóng gói báo cáo.")
+    story += [KeepTogether([p("03  /  KẾ HOẠCH AI VÀ REVIEW CỦA CON NGƯỜI", "H1VN"), *section("Kế hoạch triển khai ban đầu", "1) Kiểm tra hợp đồng GitHubClient, allowlist, backoff và trạng thái backfill. 2) Viết test trước cho timeout, ConnectError, retry bound, unsafe POST và persistence failure. 3) Quan sát RED và giữ log nguyên gốc. 4) Chỉ sửa request loop trong backend/app/github/client.py. 5) Chạy GREEN, hồi quy, lint rồi đánh giá mutation, coverage và harness mock. 6) Ghi AI Usage Log và traceability trước khi đóng gói báo cáo.")])]
     story += section("Quyết định review 1 — không retry toàn workflow", "Không bọc BackfillService.run() bằng retry. Kiểm tra models.py xác nhận uniqueness/upsert cho business rows, nhưng RawEvent và AuditLog được append trong cùng unit of work và không có khóa idempotency tương ứng. Chạy lại workflow có thể nhân bản log phụ. Tầng GET là nơi an toàn hơn cho retry trong vertical slice.")
     story += section("Quyết định review 2 — Hypothesis là phần bắt buộc", "Property test không bị bỏ qua sau khi example-based test pass. Oracle ban đầu đòi GitHubAPIError sau transport exhaustion; kiểm tra client hiện hữu cho thấy httpx transport exception được truyền nguyên trạng và không có contract yêu cầu chuyển kiểu. Oracle được sửa sang httpx.TransportError, nhưng vẫn giữ bounded attempts và yêu cầu không trả success khi cạn lượt.")
     story += section("Quyết định review 3 — giữ bằng chứng RED", "Log RED gốc và test-only commit được giữ nguyên. Bốn test thất bại chính xác: test_read_timeout_is_retried_then_succeeds, test_connection_error_is_retried_then_succeeds, test_transient_http_error_on_post_is_not_retried, test_timeout_retry_is_bounded_and_returns_only_after_success. Persistence characterization test_commit_failure_never_returns_success_and_recovery_is_consistent đã PASS trên baseline. API regression ban đầu kỳ vọng JSON 500; phản hồi thực tế của Starlette là plain text nên chỉ assertion được chỉnh theo response quan sát được.")
     story += section("Rủi ro thiếu ngữ cảnh đã điều tra", "Sau khi được phép kiểm tra model/audit code, xác nhận business rows có uniqueness nhưng raw events/audit records không có cùng bảo đảm. Rủi ro còn lại: manual full backfill có thể append thêm log; chưa có test count cho side effect này. Nhật ký AI ghi lại giả định, quyết định review, và giới hạn.")
-    story += [PageBreak()]
 
     # Page 4
-    story += [p("04  /  CHIẾN LƯỢC KIỂM THỬ THEO RỦI RO", "H1VN"), p("T01–T14 là documentation IDs của báo cáo, không đổi tên Python test. Cột ID ánh xạ từng ID tới tên test function hiện có.", "SmallVN")]
     tests = [
         ["ID", "Requirement / Risk", "Test Level", "Precondition / Input", "Expected Result", "Priority"],
         ["T01<br/><font size='5.4'>test_rate_limit_retry_after_is_respected</font>", "AC-01<br/>Retry-After", "Unit", "GET 403 + Retry-After", "Sleep delay follows header", "P2"],
@@ -168,9 +164,9 @@ def main_pages() -> list:
         ["T13<br/><font size='5.4'>test_generated_duplicate_issue_ids_remain_unique_after_reordered_reingestion</font>", "AC-03<br/>Duplicate IDs", "Property", "Duplicate IDs in changed order", "Issue rows remain unique", "P1"],
         ["T14<br/><font size='5.4'>test_commit_failure_never_returns_success_and_recovery_is_consistent</font>", "AC-04<br/>Persistence", "Integration", "Inject commit failure; then recover", "No false success; rollback/recovery", "P1"],
     ]
-    story += [table(tests, [36 * mm, 26 * mm, 15 * mm, 42 * mm, 42 * mm, 13 * mm], font="CaseCellVN")]
+    story += [KeepTogether([p("04  /  CHIẾN LƯỢC KIỂM THỬ THEO RỦI RO", "H1VN"), p("T01–T14 là documentation IDs của báo cáo, không đổi tên Python test function hiện có.", "SmallVN"), table(tests, [36 * mm, 26 * mm, 15 * mm, 42 * mm, 42 * mm, 13 * mm], font="CaseCellVN")])]
     story += section("Mức kiểm thử và oracle", "MockTransport cho HTTP/unit; SQLite in-memory cho backfill/integration; TestClient cho API persistence regression sau đó; không chạy E2E với GitHub thật. Retry property sinh max_retries 0–5 và chuỗi timeout/connection. Oracle đếm lần gọi, xác nhận ≤ max_retries+1 và yêu cầu exception khi không còn lượt. Invariant idempotency kiểm tra business rows sau ID trùng và reordering.")
-    story += [p("Hypothesis thực thi: retry 40 pass, 2 invalid, 0 fail; idempotency 30 pass, 4 invalid, 0 fail. Không có minimized failing counterexample. Nguyên nhân chi tiết của invalid examples không được log.", "SmallVN"), PageBreak()]
+    story += [p("Hypothesis thực thi: retry 40 pass, 2 invalid, 0 fail; idempotency 30 pass, 4 invalid, 0 fail. Không có minimized failing counterexample. Nguyên nhân chi tiết của invalid examples không được log.", "SmallVN")]
 
     # Page 5
     story += [p("05  /  TEST-FIRST: RED → PATCH → GREEN", "H1VN")]
@@ -188,7 +184,6 @@ def main_pages() -> list:
     story += section("Bản vá tối thiểu", "Request loop retry ConnectError và TimeoutException cho GET nếu còn lượt; chờ theo exponential backoff hiện hữu. Hết lượt thì raise exception gốc. Các response 403/429/5xx tiếp tục theo logic cũ; non-GET không nhận retry status/transport. Không thay đổi BackfillService, allowlist, token provider hay dependency production.")
     story += section("GREEN và hồi quy", "Checkpoint 3: 14/14 test retry/backfill. Checkpoint 4: 48/48 toàn backend. Sau API persistence regression: 49/49 cuối cùng (một warning deprecation). Ruff: All checks passed. Thứ tự ba file test được đảo hai lần, mỗi lần 15/15 pass. Mypy không chạy được vì module không tồn tại trong .venv.")
     story += section("Vì sao GitHubClient đủ cho lát cắt", "Lỗi phát sinh trước khi có dữ liệu trả về từ GitHub; retry đúng một GET trong client giữ nguyên ranh giới và phép đo số lần gọi. Backfill không cần biết transport retry, và lỗi commit vẫn được kiểm tra riêng ở service/API. Phạm vi hẹp tránh nhân đôi side effects của workflow.")
-    story += [PageBreak()]
 
     # Page 6
     story += [p("06  /  MUTATION VÀ COVERAGE", "H1VN")]
@@ -203,7 +198,6 @@ def main_pages() -> list:
     story += [p("Coverage command giới hạn source ở hai module production và chạy 15 test retry/backfill/API. Cột Combined là số coverage.py gộp statement và branch; không được gọi là line coverage. Đây không phải coverage toàn repository.", "SmallVN")]
     story += section("Rủi ro được bao phủ", "AC-01: 5xx, timeout, ConnectError và bound có test trực tiếp. AC-02: 401, POST/500, 403 exhaustion và transport exhaustion; chưa có test riêng 404, generic 4xx hay POST transport. AC-03: business rows được kiểm tra; raw/audit count không được assert. AC-04: service, API và mutant đều kiểm tra false success. AC-05: partial một nguồn lỗi được kiểm tra; all-fail path chưa có test riêng.")
     story += section("Branch còn thiếu có giá trị rủi ro", "Client: rate-reset wait, Retry-After thiếu/sai, generic 4xx, 304, pagination malformed. Backfill: all-resources-failed, issue cũng là PR, cutoff PR cũ, review thiếu PR. Coverage mô tả phần chưa chạy; tỷ lệ cao không thay thế assertion theo rủi ro.")
-    story += [PageBreak()]
 
     # Page 7
     story += [p("07  /  ĐỘ ỔN ĐỊNH VÀ HIỆU NĂNG", "H1VN")]
@@ -219,10 +213,8 @@ def main_pages() -> list:
     story += [table(perf, [43 * mm, 131 * mm])]
     story += section("Diễn giải đúng phạm vi", "100 worker rendezvous tại Barrier trước timed interval, nên tác vụ được thả đồng thời; thời gian barrier không tính latency. Handler MockTransport không blocking. Sleep/backoff là no-op: latency đo request/retry logic và callback, nhưng loại trừ thời gian chờ backoff thật. Năm lỗi exhausted được tiêm có chủ ý; 115 request khớp với cấu hình max_retries=2.")
     story += section("Giới hạn", "Đây là benchmark trong process với mock. Nó không đánh giá p95 production, độ trễ GitHub thật, database throughput, API concurrency end-to-end hay chứng minh ngưỡng production p95 ≤ 3 giây. Không có timing assertion trong pytest. Đây chỉ là bằng chứng rằng harness hoạt động theo các chuỗi retry đã định.")
-    story += [PageBreak()]
 
     # Page 8
-    story += [p("08  /  TRACEABILITY, BẰNG CHỨNG VÀ PHẢN TƯ", "H1VN")]
     trace = [
         ["AC / rủi ro · case IDs", "Test function(s)", "File · commit", "Kết quả"],
         ["AC-01/02 · T01, T02, T06", "test_rate_limit_retry_after_is_respected; test_rate_limit_exhaustion_raises; test_http_500_is_retried_then_succeeds", "test_rate_limit.py · 1105581", "Pass; GET retry/exhaustion"],
@@ -233,9 +225,8 @@ def main_pages() -> list:
         ["API regression · ngoài T01–T14", "test_sync_api_does_not_return_success_when_persistence_fails", "test_tenants_sync_api.py · e4e56c8", "Pass; API 500"],
         ["Performance experiment", "main / _run_task", "perf_retry_harness.py · e4e56c8 / 5f1fcbb", "100 task mock; p95 0.701 ms"],
     ]
-    story += [table(trace, [34 * mm, 79 * mm, 36 * mm, 25 * mm])]
+    story += [KeepTogether([p("08  /  TRACEABILITY, BẰNG CHỨNG VÀ PHẢN TƯ", "H1VN"), table(trace, [34 * mm, 79 * mm, 36 * mm, 25 * mm])])]
     story += [p("T01–T14 là documentation IDs, ánh xạ từng test function tại trang 4; tên Python test không đổi. API persistence regression được thêm sau đó và nằm ngoài bộ 14 case. Commit đầy đủ, commands, mutation experiment và kết quả nằm trong evidence appendix. Hai giả định AI đã sửa: ép transport exhaustion thành GitHubAPIError (oracle sửa về httpx.TransportError); kỳ vọng response 500 JSON (assert plain text thực tế). Tóm tắt perf sai 85/10/5 được sửa thành 90/5/5 theo phép đếm request.", "SmallVN")]
-    story += [p("PHẢN TƯ", "H2VN")]
     reflection = (
         "Độ tin cậy tăng lên nhờ ba loại bằng chứng bổ sung nhau: test-first làm lộ lỗi trước khi vá, kiểm tra bounded retry xác nhận giới hạn lời gọi, còn mutation thử xem test có thật sự phát hiện false success khi commit thất bại hay không. Mutant bị test persistence giết bằng lỗi DID NOT RAISE SQLAlchemyError; đây là bằng chứng mạnh hơn việc chỉ thấy test pass trên implementation đúng. Chạy lại toàn backend được 49 pass và Ruff pass, đồng thời đổi thứ tự các file test hai lần vẫn 15/15, giúp giảm lo ngại về state dùng chung.\n\n"
         "Một số điều vẫn chưa được chứng minh: nhánh 404/generic 4xx và vài nhánh pagination chưa có test trực tiếp; raw event và audit append có thể tăng khi chạy lại workflow; Hypothesis ghi nhận invalid examples nhưng không ghi rõ dữ liệu gây ra; coverage giới hạn ở hai module; benchmark dùng mock và bỏ thời gian backoff thật. Vì vậy p95 0.701 ms không đại diện cho production.\n\n"
@@ -245,7 +236,7 @@ def main_pages() -> list:
     reflection_words = len(re.findall(r"\S+", reflection))
     if not 250 <= reflection_words <= 350:
         raise ValueError(f"Reflection has {reflection_words} whitespace-delimited words; expected 250-350")
-    story += [p(reflection.replace("\n\n", "<br/><br/>"), "SmallVN"), Spacer(1, 1 * mm), p(f"Số từ phản tư (tách theo khoảng trắng): {reflection_words}.", "TinyVN"), PageBreak()]
+    story += [KeepTogether([p("PHẢN TƯ", "H2VN"), p(reflection.replace("\n\n", "<br/><br/>"), "SmallVN"), Spacer(1, 1 * mm), p(f"Số từ phản tư (tách theo khoảng trắng): {reflection_words}.", "TinyVN")]), PageBreak()]
     return story, reflection_words
 
 
@@ -259,31 +250,29 @@ def appendix(story: list, title: str, files: list[str], intro: str = "") -> None
             raise FileNotFoundError(path)
         content = path.read_text(encoding="utf-8", errors="replace").strip()
         source_path = f"backend/tests/{rel[3:]}" if rel.startswith("../") else f"backend/tests/evidence/{rel}"
-        story += [p(f"Nguồn: {source_path}", "H2VN")]
         wrapped = "\n".join(
             textwrap.fill(line, width=118, subsequent_indent="  ", replace_whitespace=False, drop_whitespace=True)
             if len(line) > 118 else line
             for line in content.splitlines()
         )
-        story += [Preformatted(wrapped, styles["CodeVN"], maxLineLength=118), Spacer(1, 4 * mm)]
+        wrapped_lines = wrapped.splitlines()
+        chunks = [wrapped_lines[start : start + 52] for start in range(0, len(wrapped_lines), 52)] or [[]]
+        for chunk_index, chunk in enumerate(chunks):
+            if chunk_index == 0:
+                story += [p(f"Nguồn: {source_path}", "H2VN")]
+            story += [Preformatted("\n".join(chunk), styles["CodeVN"], maxLineLength=118)]
+        story += [Spacer(1, 4 * mm)]
 
 
 def appendix_pages() -> list:
-    story = [p("PHỤ LỤC · HỒ SƠ BẰNG CHỨNG", "H1VN"), p("Phần này nằm sau 8 trang nội dung chính; log gốc vẫn được lưu nguyên trong repository.", "SmallVN"), PageBreak()]
+    story = [p("PHỤ LỤC · HỒ SƠ BẰNG CHỨNG", "H1VN"), p("Phần này nằm sau nội dung chính; log gốc vẫn được lưu nguyên trong repository.", "SmallVN")]
     appendix(story, "A. AI Usage Log", ["vt024-ai-usage-log.md"], "Nhật ký đầy đủ: kế hoạch ban đầu, quyết định review, RED/GREEN, oracle, mutation, coverage, performance và rủi ro thiếu ngữ cảnh.")
-    story += [PageBreak()]
     appendix(story, "B. RED execution evidence", ["vt024-red-context.txt", "vt024-red.txt"], "Log RED gốc được giữ nguyên; thể hiện test trước bản vá và các failure mong đợi.")
-    story += [PageBreak()]
     appendix(story, "C. GREEN execution evidence", ["vt024-green-context.txt", "vt024-green.txt", "vt024-final-tests.txt", "vt024-final-ruff.txt", "vt024-mypy.txt"], "Bao gồm targeted GREEN, Hypothesis statistics, full suite cuối, Ruff và limitation mypy.")
-    story += [PageBreak()]
     appendix(story, "D. Mutation diff and kill output", ["vt024-mutation.txt", "vt024-mutation-diff.patch", "vt024-mutation-removal.txt"], "Mutant chỉ được dùng trong thí nghiệm; bản vá và output thất bại của regression được lưu.")
-    story += [PageBreak()]
     appendix(story, "E. Coverage report and risk mapping", ["vt024-coverage-run.txt", "vt024-coverage-report.txt", "vt024-coverage-review.md"], "Coverage giới hạn ở client và backfill; review ghi rõ statement, branch, combined và nhánh thiếu.")
-    story += [PageBreak()]
     appendix(story, "F. Flaky-test evidence", ["vt024-flaky-orders.txt", "vt024-flaky-review.md", "vt024-hypothesis-final.txt"], "Hai thứ tự test, chính sách time/backoff, Hypothesis invalid counts và giới hạn đã quan sát.")
-    story += [PageBreak()]
     appendix(story, "G. Performance harness and output", ["../perf_retry_harness.py", "vt024-performance.txt"], "Harness có barrier 100 worker; latency nearest-rank tính trên toàn bộ outcome, gồm 5 exhausted.")
-    story += [PageBreak()]
     appendix(story, "H. Commands, traceability and commit history", ["vt024-traceability.md", "vt024-phase4-context.txt"], "Các lệnh kiểm tra và commit đầy đủ được giữ trong log/traceability của repository.")
     return story
 
